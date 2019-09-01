@@ -42,7 +42,7 @@ void initVT100() {
 	saveCursorX = 0;
 	saveTxtAttr = 0;
 	saveTxtColor = 7;
-	lastBlinkTime = millis();
+	lastBlinkTime = 0;
 }
 
 /***************************** UTILITY FUNCTIONS *****************************/
@@ -1374,8 +1374,8 @@ void vtIdle() {
 	if (vtMode & VT100_MODE_CURSOR_ON) {
 		if (vtMode & VT100_MODE_CURSOR_BLINK) {
 			if ((millis() - lastBlinkTime) >= VT100_CURSOR_BLINK_TIME) {
-				toggleCursor();
 				lastBlinkTime = millis();
+				toggleCursor();
 			}
 		} else {
 			if (!(vtMode & VT100_MODE_CURSOR_ACTIVE)) {
