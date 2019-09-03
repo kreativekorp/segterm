@@ -187,7 +187,11 @@ static void vtInputControl(uint8_t ch) {
 		// ETX - half-duplex turnaround (not implemented)
 		// EOT - disconnect (not implemented)
 		// ENQ - answerback message (not implemented)
-		// BEL - terminal bell (not implemented)
+
+		// BEL - terminal bell
+		case 0x07:
+			tone(SEGTERM_BELL_PIN, SEGTERM_BELL_FRQ, SEGTERM_BELL_DUR);
+			break;
 
 		// BS - backspace
 		case 0x08:
