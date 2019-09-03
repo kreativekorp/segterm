@@ -556,3 +556,20 @@ void clearCols(uint8_t row, uint8_t col1, uint8_t col2) {
 	--lockLevel;
 	if (!lockLevel) flushRow(row);
 }
+
+void fillScreen(uint8_t ch, uint8_t chattr, uint8_t mdattr) {
+	uint8_t row, col;
+	chattr |= chattr << 4;
+	for (row = 0; row < SEGTERM_ROWS; ++row) {
+		for (col = 0; col < (SEGTERM_COLS << 2); ++col) {
+			charBuf[row][col] = ch;
+		}
+		for (col = 0; col < (SEGTERM_COLS << 1); ++col) {
+			chAttrBuf[row][col] = chattr;
+		}
+		for (col = 0; col < SEGTERM_COLS; ++col) {
+			mdAttrBuf[row][col] = mdattr;
+		}
+	}
+	if (!lockLevel) flushScreen();
+}

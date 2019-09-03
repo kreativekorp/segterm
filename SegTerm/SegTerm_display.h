@@ -67,5 +67,6 @@ void    scrollRows(uint8_t top, uint8_t bottom, int8_t dir);
 void    scrollCols(uint8_t row, uint8_t left, uint8_t right, int8_t dir);
 void    clearRows(uint8_t row1, uint8_t row2);
 void    clearCols(uint8_t row, uint8_t col1, uint8_t col2);
+void    fillScreen(uint8_t ch, uint8_t chattr, uint8_t mdattr);
 
 #endif

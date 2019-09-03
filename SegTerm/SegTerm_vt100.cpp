@@ -461,6 +461,44 @@ static void vtInputEscapeBasic(uint8_t ch) {
 	vtState = VT100_STATE_BASE;
 }
 
+static void vtInputEscapeHash(uint8_t ch) {
+	switch (ch) {
+
+		// ESC # 3 - double-height, top half (not implemented)
+		// ESC # 4 - double-height, bottom half (not implemented)
+		// ESC # 5 - single-width, single-height (not implemented)
+		// ESC # 6 - double-width, single-height (not implemented)
+
+		// ESC # 8 - screen alignment test
+		case '8':
+			fillScreen(0x79, SEGTERM_CHATTR_RAW, (VT100_BRIGHTNESS_NORMAL<<4));
+			break;
+
+		// ESC # a-i - LED segment test (SegTerm extension)
+		case 'a': fillScreen(0x01, SEGTERM_CHATTR_RAW, (VT100_BRIGHTNESS_NORMAL<<4)); break;
+		case 'b': fillScreen(0x02, SEGTERM_CHATTR_RAW, (VT100_BRIGHTNESS_NORMAL<<4)); break;
+		case 'c': fillScreen(0x04, SEGTERM_CHATTR_RAW, (VT100_BRIGHTNESS_NORMAL<<4)); break;
+		case 'd': fillScreen(0x08, SEGTERM_CHATTR_RAW, (VT100_BRIGHTNESS_NORMAL<<4)); break;
+		case 'e': fillScreen(0x10, SEGTERM_CHATTR_RAW, (VT100_BRIGHTNESS_NORMAL<<4)); break;
+		case 'f': fillScreen(0x20, SEGTERM_CHATTR_RAW, (VT100_BRIGHTNESS_NORMAL<<4)); break;
+		case 'g': fillScreen(0x40, SEGTERM_CHATTR_RAW, (VT100_BRIGHTNESS_NORMAL<<4)); break;
+		case 'h': fillScreen(0x80, SEGTERM_CHATTR_RAW, (VT100_BRIGHTNESS_NORMAL<<4)); break;
+		case 'i': fillScreen(0, 0, ((VT100_BRIGHTNESS_NORMAL<<4)|3)); break;
+
+		// ESC # y - LED segment test (SegTerm extension)
+		case 'y':
+			fillScreen(0xFF, SEGTERM_CHATTR_RAW, ((VT100_BRIGHTNESS_NORMAL<<4)|3));
+			break;
+
+		// ESC # z - clear screen (SegTerm extension)
+		case 'z':
+			fillScreen(0, 0, (VT100_BRIGHTNESS_NORMAL<<4));
+			break;
+
+	}
+	vtState = VT100_STATE_BASE;
+}
+
 static void vtInputEscapeFinish(uint8_t ch) {
 	switch (vtEscVariant) {
 
@@ -475,12 +513,9 @@ static void vtInputEscapeFinish(uint8_t ch) {
 			// ESC SP M - ANSI conformance level 2 (VT420)
 			// ESC SP N - ANSI conformance level 3 (VT420)
 
-		// case '#':
-			// ESC # 3 - double-height, top half
-			// ESC # 4 - double-height, bottom half
-			// ESC # 5 - single-width, single-height
-			// ESC # 6 - double-width, single-height
-			// ESC # 8 - screen alignment test
+		case '#':
+			vtInputEscapeHash(ch);
+			return;
 
 		// case '(': // select G0 94-character set
 		// case ')': // select G1 94-character set
@@ -908,6 +943,7 @@ static void vtInputCSIBasic(uint8_t ch) {
 				case 1: lockScreen(); break;
 				case 2: unlockScreen(); break;
 				case 3: while (unlockScreen()); break;
+				case 8: fillScreen(vtParam[1], vtParam[2], vtParam[3]); break;
 				case 10: loadDefaultDisplaySettings(); break;
 				case 20: loadDisplaySettingsFromEEPROM( ((int)vtParam[1]) << 4 ); break;
 				case 30: saveDisplaySettingsToEEPROM  ( ((int)vtParam[1]) << 4 ); break;
