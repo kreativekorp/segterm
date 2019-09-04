@@ -900,18 +900,22 @@ static void vtInputCSIBasic(uint8_t ch) {
 #ifdef SEGTERM_KBDLED_1
 				case 1:
 					digitalWrite(SEGTERM_KBDLED_1, HIGH);
+					break;
 #endif
 #ifdef SEGTERM_KBDLED_2
 				case 2:
 					digitalWrite(SEGTERM_KBDLED_2, HIGH);
+					break;
 #endif
 #ifdef SEGTERM_KBDLED_3
 				case 3:
 					digitalWrite(SEGTERM_KBDLED_3, HIGH);
+					break;
 #endif
 #ifdef SEGTERM_KBDLED_4
 				case 4:
 					digitalWrite(SEGTERM_KBDLED_4, HIGH);
+					break;
 #endif
 			}
 			break;
