@@ -43,6 +43,23 @@ void initVT100() {
 	saveTxtAttr = 0;
 	saveTxtColor = 7;
 	lastBlinkTime = 0;
+
+#ifdef SEGTERM_KBDLED_1
+	pinMode(SEGTERM_KBDLED_1, OUTPUT);
+	digitalWrite(SEGTERM_KBDLED_1, LOW);
+#endif
+#ifdef SEGTERM_KBDLED_2
+	pinMode(SEGTERM_KBDLED_2, OUTPUT);
+	digitalWrite(SEGTERM_KBDLED_2, LOW);
+#endif
+#ifdef SEGTERM_KBDLED_3
+	pinMode(SEGTERM_KBDLED_3, OUTPUT);
+	digitalWrite(SEGTERM_KBDLED_3, LOW);
+#endif
+#ifdef SEGTERM_KBDLED_4
+	pinMode(SEGTERM_KBDLED_4, OUTPUT);
+	digitalWrite(SEGTERM_KBDLED_4, LOW);
+#endif
 }
 
 /***************************** UTILITY FUNCTIONS *****************************/
@@ -737,17 +754,19 @@ static void vtInputCSIBasic(uint8_t ch) {
 			break;
 
 		// ESC [ <n> ; ... ; <n> h - set mode
-		//   n =  2 - keyboard lock (not implemented)
+		//   n =  2 - keyboard lock
 		//   n =  3 - show control characters (VT510; not implemented)
 		//   n =  4 - insert mode
-		//   n = 12 - local echo off (not implemented)
+		//   n = 12 - local echo off
 		//   n = 20 - newline mode
 		case 'h':
 			if (vtParamPtr < VT100_MAX_PARAMS) ++vtParamPtr;
 			for (i = 0; i < vtParamPtr; ++i) {
 				switch (vtParam[i]) {
-					case  4: vtMode |= VT100_MODE_INSERT;  break;
-					case 20: vtMode |= VT100_MODE_NEWLINE; break;
+					case  2: vtMode |=  VT100_MODE_KEYBOARD_LOCK; break;
+					case  4: vtMode |=  VT100_MODE_INSERT;        break;
+					case 12: vtMode &=~ VT100_MODE_LOCAL_ECHO;    break;
+					case 20: vtMode |=  VT100_MODE_NEWLINE;       break;
 				}
 			}
 			break;
@@ -761,17 +780,19 @@ static void vtInputCSIBasic(uint8_t ch) {
 		//   n = 7 - stop printer to host session (VT510)
 
 		// ESC [ <n> ; ... ; <n> l - reset mode
-		//   n =  2 - keyboard unlock (not implemented)
+		//   n =  2 - keyboard unlock
 		//   n =  3 - interpret control characters (VT510; not implemented)
 		//   n =  4 - replace mode
-		//   n = 12 - local echo on (not implemented)
+		//   n = 12 - local echo on
 		//   n = 20 - linefeed mode
 		case 'l':
 			if (vtParamPtr < VT100_MAX_PARAMS) ++vtParamPtr;
 			for (i = 0; i < vtParamPtr; ++i) {
 				switch (vtParam[i]) {
-					case  4: vtMode &=~ VT100_MODE_INSERT;  break;
-					case 20: vtMode &=~ VT100_MODE_NEWLINE; break;
+					case  2: vtMode &=~ VT100_MODE_KEYBOARD_LOCK; break;
+					case  4: vtMode &=~ VT100_MODE_INSERT;        break;
+					case 12: vtMode |=  VT100_MODE_LOCAL_ECHO;    break;
+					case 20: vtMode &=~ VT100_MODE_NEWLINE;       break;
 				}
 			}
 			break;
@@ -854,12 +875,46 @@ static void vtInputCSIBasic(uint8_t ch) {
 		//   n = 4 - Spanish
 		//   n = 5 - Italian
 
-		// ESC [ <n> q - keyboard LEDs (not implemented)
+		// ESC [ <n> q - keyboard LEDs
 		//   n = 0 - all LEDs off
 		//   n = 1 - LED 1 on
 		//   n = 2 - LED 2 on
 		//   n = 3 - LED 3 on
 		//   n = 4 - LED 4 on
+		case 'q':
+			switch (vtParam[0]) {
+				case 0:
+#ifdef SEGTERM_KBDLED_1
+					digitalWrite(SEGTERM_KBDLED_1, LOW);
+#endif
+#ifdef SEGTERM_KBDLED_2
+					digitalWrite(SEGTERM_KBDLED_2, LOW);
+#endif
+#ifdef SEGTERM_KBDLED_3
+					digitalWrite(SEGTERM_KBDLED_3, LOW);
+#endif
+#ifdef SEGTERM_KBDLED_4
+					digitalWrite(SEGTERM_KBDLED_4, LOW);
+#endif
+					break;
+#ifdef SEGTERM_KBDLED_1
+				case 1:
+					digitalWrite(SEGTERM_KBDLED_1, HIGH);
+#endif
+#ifdef SEGTERM_KBDLED_2
+				case 2:
+					digitalWrite(SEGTERM_KBDLED_2, HIGH);
+#endif
+#ifdef SEGTERM_KBDLED_3
+				case 3:
+					digitalWrite(SEGTERM_KBDLED_3, HIGH);
+#endif
+#ifdef SEGTERM_KBDLED_4
+				case 4:
+					digitalWrite(SEGTERM_KBDLED_4, HIGH);
+#endif
+			}
+			break;
 
 		// ESC [ <t> ; <b> r - set scrolling region
 		case 'r':
@@ -1347,10 +1402,15 @@ static void toggleCursor() {
 
 /******************************** PUBLIC API ********************************/
 
+uint8_t vtGetMode()       { return vtMode;   }
 uint8_t vtGetCursorY()    { return cursorY;  }
 uint8_t vtGetCursorX()    { return cursorX;  }
 uint8_t vtGetAttributes() { return txtAttr;  }
 uint8_t vtGetTextColor()  { return txtColor; }
+
+void vtSetMode(uint8_t mode) {
+	vtMode = mode;
+}
 
 void vtSetCursor(uint8_t y, uint8_t x) {
 	if (vtMode & VT100_MODE_CURSOR_ACTIVE) toggleCursor();

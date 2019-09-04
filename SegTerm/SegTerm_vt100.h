@@ -6,7 +6,9 @@
 #define VT100_MODE_VT52          0x80
 #define VT100_MODE_INSERT        0x40
 #define VT100_MODE_NEWLINE       0x20
-#define VT100_MODE_DEFAULT       0x06
+#define VT100_MODE_KEYBOARD_LOCK 0x10
+#define VT100_MODE_DEFAULT       0x0E
+#define VT100_MODE_LOCAL_ECHO    0x08
 #define VT100_MODE_CURSOR_ON     0x04
 #define VT100_MODE_CURSOR_BLINK  0x02
 #define VT100_MODE_CURSOR_ACTIVE 0x01
@@ -61,10 +63,12 @@
 
 void    initVT100();
 
+uint8_t vtGetMode();
 uint8_t vtGetCursorY();
 uint8_t vtGetCursorX();
 uint8_t vtGetAttributes();
 uint8_t vtGetTextColor();
+void    vtSetMode(uint8_t mode);
 void    vtSetCursor(uint8_t y, uint8_t x);
 void    vtSetCursorY(uint8_t y);
 void    vtSetCursorX(uint8_t x);

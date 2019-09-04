@@ -19,4 +19,7 @@
 #define SEGTERM_BELL_FRQ  300
 #define SEGTERM_BELL_DUR  500
 
+/* The pins to which the keyboard LEDs are connected. */
+#define SEGTERM_KBDLED_1   15
+
 #endif
