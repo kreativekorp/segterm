@@ -779,6 +779,12 @@ static void vtInputCSIBasic(uint8_t ch) {
 		//   n = 6 - start printer to host session (VT510)
 		//   n = 7 - stop printer to host session (VT510)
 
+		// ESC [ <n> ; <n> ; <n> j - fill screen (SegTerm extension)
+		case 'j':
+			if (!((i = vtParam[2]) & 0xF0)) i |= (VT100_BRIGHTNESS_NORMAL << 4);
+			fillScreen(vtParam[0], (vtParam[1] & 0x0F), i);
+			break;
+
 		// ESC [ <n> ; ... ; <n> l - reset mode
 		//   n =  2 - keyboard unlock
 		//   n =  3 - interpret control characters (VT510; not implemented)
@@ -1002,7 +1008,6 @@ static void vtInputCSIBasic(uint8_t ch) {
 				case 1: lockScreen(); break;
 				case 2: unlockScreen(); break;
 				case 3: while (unlockScreen()); break;
-				case 8: fillScreen(vtParam[1], vtParam[2], vtParam[3]); break;
 				case 10: loadDefaultDisplaySettings(); break;
 				case 20: loadDisplaySettingsFromEEPROM( ((int)vtParam[1]) << 4 ); break;
 				case 30: saveDisplaySettingsToEEPROM  ( ((int)vtParam[1]) << 4 ); break;
