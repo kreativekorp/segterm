@@ -26,7 +26,7 @@ unsigned int getNoteFrequency(uint8_t p) {
 	return pgm_read_word(&NOTE_FREQ[p & 0x7F]);
 }
 
-void play(const char * notes) {
+void play(uint8_t pin, const char * notes) {
 	unsigned long tempo = 120; // default tempo in beats per minute
 	unsigned int pitch = 12; // 12 higher than actual pitch to accommodate accidentals
 	unsigned int octave = 5; // 1 higher than actual octave to accommodate octave 00
@@ -102,7 +102,7 @@ void play(const char * notes) {
 						if (pitch > 0) --pitch;
 						++notes;
 					} else if (ch == '#') {
-						if (pitch < 24) ++pitch;
+						if (pitch < 36) ++pitch;
 						++notes;
 					} else {
 						break;
@@ -186,7 +186,7 @@ void play(const char * notes) {
 				tonePitch = octave * 12 + pitch - 12;
 				if (tonePitch > 0 && tonePitch < 128) {
 					toneFreq = pgm_read_word(&NOTE_FREQ[tonePitch]);
-					tone(PLAYDUINO_PIN, toneFreq, toneDuration);
+					tone(pin, toneFreq, toneDuration);
 				}
 			}
 		}

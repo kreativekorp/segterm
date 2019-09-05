@@ -3,7 +3,9 @@
 #include <inttypes.h>
 #include "PlayduinoLib.h"
 
+#define PLAYPIN 8
 #define BUFLEN 256
+
 static char buffer[BUFLEN];
 static int bufPtr;
 
@@ -14,11 +16,11 @@ void setup() {
 }
 
 void loop() {
-	uint8_t ch;
+	char ch;
 	while (Serial.available() > 0) {
 		ch = Serial.read();
 		if (ch == '\n' || ch == '\r') {
-			play(buffer);
+			play(PLAYPIN, buffer);
 			buffer[0] = 0;
 			bufPtr = 0;
 		} else if (ch && bufPtr < (BUFLEN-1)) {
