@@ -3,6 +3,9 @@
 #include "KeyboardLib.h"
 
 void initKeyboard() {
+	// Turn keyboard LED off.
+	KBD_LED_DDR  |=  KBD_LED_MASK;
+	KBD_LED_PORT &=~ KBD_LED_MASK;
 	// Anodes are pulled high and read as inputs.
 	KBD_ANODE_0_DDR  &=~ KBD_ANODE_0_MASK;
 	KBD_ANODE_0_PORT |=  KBD_ANODE_0_MASK;
@@ -172,4 +175,36 @@ uint8_t readKeyboardEvent() {
 	key = kbdBuffer[kbdBufStart]; ++kbdBufStart;
 	if (kbdBufStart >= KBD_BUFFER_SIZE) kbdBufStart = 0;
 	return key;
+}
+
+static const char ASCII_UNSHIFTED[] PROGMEM = {
+	'6', '5', '4', '3', '2', '1',  27,  17,
+	'y', 't', 'r', 'e', 'w', 'q',   9,  18,
+	'h', 'g', 'f', 'd', 's', 'a',  20,  32,
+	'n', 'b', 'v', 'c', 'x', 'z', '<',  18,
+	'm', ',', '.', '/',  16,  28,  29,  17,
+	'j', 'k', 'l', ';',  39,  10,  30,  31,
+	'u', 'i', 'o', 'p', '[', ']',  92, '`',
+	'7', '8', '9', '0', '-', '=',   8, 127,
+};
+
+static const char ASCII_SHIFTED[] PROGMEM = {
+	'^', '%', '$', '#', '@', '!',  27,  17,
+	'Y', 'T', 'R', 'E', 'W', 'Q',   9,  18,
+	'H', 'G', 'F', 'D', 'S', 'A',  20,  32,
+	'N', 'B', 'V', 'C', 'X', 'Z', '>',  18,
+	'M', '<', '>', '?',  16,  28,  29,  17,
+	'J', 'K', 'L', ':', '"',  10,  30,  31,
+	'U', 'I', 'O', 'P', '{', '}', '|', '~',
+	'&', '*', '(', ')', '_', '+',   8, 127,
+};
+
+char keyboardEventToASCII(uint8_t evt, uint8_t shift) {
+	if (shift) return pgm_read_byte(&ASCII_SHIFTED[evt & KBD_KEY]);
+	else return pgm_read_byte(&ASCII_UNSHIFTED[evt & KBD_KEY]);
+}
+
+void setKeyboardLED(uint8_t led) {
+	if (led) KBD_LED_PORT |= KBD_LED_MASK;
+	else KBD_LED_PORT &=~ KBD_LED_MASK;
 }
