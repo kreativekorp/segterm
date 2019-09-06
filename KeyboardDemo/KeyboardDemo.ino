@@ -7,8 +7,6 @@ char noteNames[] = {
 	'D','#',0, 'E',  0,0, 'F',0,0, 'F','#',0, 'G',  0,0, 'G','#',0,
 };
 
-uint8_t shifted = 0;
-
 void setup() {
 	initKeyboard();
 	Serial.begin(9600);
@@ -22,14 +20,12 @@ void loop() {
 	ach[2] = ' ';
 	ach[3] = 0;
 	while ((ch = readKeyboardEvent())) {
-		if (ch == (KBD_KEY_SHIFT | KBD_PRESSED )) shifted = 1;
-		if (ch == (KBD_KEY_SHIFT | KBD_RELEASED)) shifted = 0;
 		if (ch & KBD_PRESSED ) Serial.print("PRESSED  ");
 		if (ch & KBD_RELEASED) Serial.print("RELEASED ");
 		ch &= KBD_KEY;
 		Serial.print(ch >> 4, HEX);
 		Serial.print(ch & 15, HEX);
-		ach[1] = keyboardEventToASCII(ch, shifted);
+		ach[1] = keyboardEventToASCII(ch, getKeyboardModifiers());
 		if (ach[1] < 32 || ach[1] >= 127) ach[1] = ' ';
 		Serial.print(ach);
 		Serial.print(&noteNames[(ch % 12) * 3]);

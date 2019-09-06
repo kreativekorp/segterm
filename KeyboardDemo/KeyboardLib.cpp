@@ -147,6 +147,7 @@ static uint8_t lastState[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 static uint8_t kbdBuffer[KBD_BUFFER_SIZE];
 static int kbdBufStart = 0;
 static int kbdBufEnd = 0;
+static uint8_t modifiers = 0;
 
 static void writeKeyboardEvent(uint8_t evt) {
 	kbdBuffer[kbdBufEnd] = evt; ++kbdBufEnd;
@@ -174,7 +175,39 @@ uint8_t readKeyboardEvent() {
 	if (kbdBufStart == kbdBufEnd) return 0;
 	key = kbdBuffer[kbdBufStart]; ++kbdBufStart;
 	if (kbdBufStart >= KBD_BUFFER_SIZE) kbdBufStart = 0;
+	switch (key) {
+		case (KBD_KEY_CAPS | KBD_PRESSED):
+			modifiers ^= KBD_MOD_CAPS;
+			if (modifiers & KBD_MOD_CAPS) KBD_LED_PORT |= KBD_LED_MASK;
+			else KBD_LED_PORT &=~ KBD_LED_MASK;
+			break;
+		case (KBD_KEY_SHIFT | KBD_PRESSED ): modifiers |=  KBD_MOD_SHIFT; break;
+		case (KBD_KEY_SHIFT | KBD_RELEASED): modifiers &=~ KBD_MOD_SHIFT; break;
+		case (KBD_KEY_LCTRL | KBD_PRESSED ): modifiers |=  KBD_MOD_LCTRL; break;
+		case (KBD_KEY_LCTRL | KBD_RELEASED): modifiers &=~ KBD_MOD_LCTRL; break;
+		case (KBD_KEY_LALT  | KBD_PRESSED ): modifiers |=  KBD_MOD_LALT;  break;
+		case (KBD_KEY_LALT  | KBD_RELEASED): modifiers &=~ KBD_MOD_LALT;  break;
+		case (KBD_KEY_RCTRL | KBD_PRESSED ): modifiers |=  KBD_MOD_RCTRL; break;
+		case (KBD_KEY_RCTRL | KBD_RELEASED): modifiers &=~ KBD_MOD_RCTRL; break;
+		case (KBD_KEY_RALT  | KBD_PRESSED ): modifiers |=  KBD_MOD_RALT;  break;
+		case (KBD_KEY_RALT  | KBD_RELEASED): modifiers &=~ KBD_MOD_RALT;  break;
+	}
 	return key;
+}
+
+uint8_t getKeyboardModifiers() {
+	return modifiers;
+}
+
+void setKeyboardModifiers(uint8_t mod) {
+	modifiers = mod;
+	if (modifiers & KBD_MOD_CAPS) KBD_LED_PORT |= KBD_LED_MASK;
+	else KBD_LED_PORT &=~ KBD_LED_MASK;
+}
+
+void setKeyboardLED(uint8_t led) {
+	if (led) KBD_LED_PORT |= KBD_LED_MASK;
+	else KBD_LED_PORT &=~ KBD_LED_MASK;
 }
 
 static const char ASCII_UNSHIFTED[] PROGMEM = {
@@ -199,12 +232,12 @@ static const char ASCII_SHIFTED[] PROGMEM = {
 	'&', '*', '(', ')', '_', '+',   8, 127,
 };
 
-char keyboardEventToASCII(uint8_t evt, uint8_t shift) {
-	if (shift) return pgm_read_byte(&ASCII_SHIFTED[evt & KBD_KEY]);
-	else return pgm_read_byte(&ASCII_UNSHIFTED[evt & KBD_KEY]);
-}
-
-void setKeyboardLED(uint8_t led) {
-	if (led) KBD_LED_PORT |= KBD_LED_MASK;
-	else KBD_LED_PORT &=~ KBD_LED_MASK;
+char keyboardEventToASCII(uint8_t evt, uint8_t mod) {
+	char ch = (mod & KBD_MOD_SHIFT)
+	        ? pgm_read_byte(&ASCII_SHIFTED  [evt & KBD_KEY])
+	        : pgm_read_byte(&ASCII_UNSHIFTED[evt & KBD_KEY]);
+	if ((mod & KBD_MOD_CAPS) && ch >= 'a' && ch <= 'z') ch -= 32;
+	if ((mod & KBD_MOD_CTRL) && ch >= '@' && ch <= '~') ch &= 0x1F;
+	if (mod & KBD_MOD_ALT) ch |= 0x80;
+	return ch;
 }

@@ -178,6 +178,15 @@
 #define KBD_KEY_BKSP   0x3E
 #define KBD_KEY_DEL    0x3F
 
+#define KBD_MOD_CAPS   0x80
+#define KBD_MOD_SHIFT  0x40
+#define KBD_MOD_LCTRL  0x20
+#define KBD_MOD_LALT   0x10
+#define KBD_MOD_RCTRL  0x02
+#define KBD_MOD_RALT   0x01
+#define KBD_MOD_CTRL   0x22
+#define KBD_MOD_ALT    0x11
+
 #define KBD_ASCII_BKSP    8
 #define KBD_ASCII_TAB     9
 #define KBD_ASCII_ENTER  10
@@ -196,7 +205,9 @@
 void    initKeyboard();
 void    readKeyboardState(uint8_t * state);
 uint8_t readKeyboardEvent();
-char    keyboardEventToASCII(uint8_t evt, uint8_t shift);
+uint8_t getKeyboardModifiers();
+void    setKeyboardModifiers(uint8_t mod);
 void    setKeyboardLED(uint8_t led);
+char    keyboardEventToASCII(uint8_t evt, uint8_t mod);
 
 #endif
