@@ -782,7 +782,7 @@ static void vtInputCSIBasic(uint8_t ch) {
 		// ESC [ <n> ; <n> ; <n> j - fill screen (SegTerm extension)
 		case 'j':
 			if (!((i = vtParam[2]) & 0xF0)) i |= (VT100_BRIGHTNESS_NORMAL << 4);
-			fillScreen(vtParam[0], (vtParam[1] & 0x0F), i);
+			fillScreen(vtParam[0], vtParam[1], i);
 			break;
 
 		// ESC [ <n> ; ... ; <n> l - reset mode

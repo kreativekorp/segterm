@@ -559,7 +559,7 @@ void clearCols(uint8_t row, uint8_t col1, uint8_t col2) {
 
 void fillScreen(uint8_t ch, uint8_t chattr, uint8_t mdattr) {
 	uint8_t row, col;
-	chattr |= chattr << 4;
+	chattr &= 0x0F; chattr |= chattr << 4;
 	for (row = 0; row < SEGTERM_ROWS; ++row) {
 		for (col = 0; col < (SEGTERM_COLS << 2); ++col) {
 			charBuf[row][col] = ch;
