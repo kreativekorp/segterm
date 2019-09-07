@@ -59,7 +59,7 @@
 #define VT100_BRIGHTNESS_CYAN      11
 #define VT100_BRIGHTNESS_WHITE     15
 
-#define VT100_CURSOR_BLINK_TIME   441
+#define VT100_CURSOR_BLINK_TIME   693
 
 void    initVT100();
 

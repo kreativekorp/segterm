@@ -176,7 +176,7 @@ static void flushChar(uint8_t row, uint8_t col) {
 	uint8_t chcol, addr, reg, data;
 	chcol = col; col >>= 2;
 	addr = HT16K33_BASE_ADDRESS | (col << 1);
-	reg = chcol & 3; if (reg >= 2) ++reg;
+	reg = chcol & 3; if (reg >= 2) ++reg; reg <<= 1;
 	data = getRawChar(row, chcol);
 	si[row].i2c_start(addr);
 	si[row].i2c_write(reg);
@@ -347,7 +347,7 @@ void setMdAttr(uint8_t row, uint8_t col, uint8_t a) {
 		uint8_t br = (((a >> 4) & 15) * brightness) / 15;
 		uint8_t bl = ((a >> 1) & 6);
 		si[row].i2c_start(addr);
-		si[row].i2c_write(2);
+		si[row].i2c_write(4);
 		si[row].i2c_write(a & 3);
 		si[row].i2c_write(0);
 		si[row].i2c_rep_start(addr);
@@ -400,7 +400,7 @@ void setMdColon(uint8_t row, uint8_t col, uint8_t c) {
 	if (!lockLevel) {
 		uint8_t addr = HT16K33_BASE_ADDRESS | (col << 1);
 		si[row].i2c_start(addr);
-		si[row].i2c_write(2);
+		si[row].i2c_write(4);
 		si[row].i2c_write(c & 3);
 		si[row].i2c_write(0);
 		si[row].i2c_stop();
