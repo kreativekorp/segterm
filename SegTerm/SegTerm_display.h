@@ -31,7 +31,7 @@
 #define SEGTERM_DOTMODE_UPPERCASE 0x02
 #define SEGTERM_DOTMODE_LOWERCASE 0x01
 
-#define SEGTERM_BLINK_RATE         500
+#define SEGTERM_BLINK_RATE        1000
 #define SEGTERM_XORMASK_DEFAULT   0x88
 
 void    initDisplay();
