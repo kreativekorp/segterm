@@ -19,4 +19,5 @@ void loop() {
 	while (Serial.available() > 0) vtPutChar(Serial.read());
 	while ((ch = vtGetChar())) Serial.write(ch);
 	vtIdle();
+	displayIdle();
 }

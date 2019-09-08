@@ -37,13 +37,14 @@ static const uint8_t FONT_B[] PROGMEM = {
 
 static uint8_t font[96];
 static uint8_t charBuf  [SEGTERM_ROWS][SEGTERM_COLS << 2];
-static uint8_t chAttrBuf[SEGTERM_ROWS][SEGTERM_COLS << 1];
+static uint8_t chAttrBuf[SEGTERM_ROWS][SEGTERM_COLS << 2];
 static uint8_t mdAttrBuf[SEGTERM_ROWS][SEGTERM_COLS     ];
 static uint8_t lcMode;
 static uint8_t dotMode;
 static uint8_t brightness;
 static uint8_t xorMask;
 static uint8_t lockLevel;
+static uint8_t blinkState;
 
 static SlowSoftI2CMaster si[] = {
 #if SEGTERM_ROWS >= 1
@@ -104,9 +105,7 @@ void initDisplay() {
 	}
 	for (row = 0; row < SEGTERM_ROWS; ++row) {
 		for (col = 0; col < (SEGTERM_COLS << 2); ++col) {
-			charBuf[row][col] = 0;
-		}
-		for (col = 0; col < (SEGTERM_COLS << 1); ++col) {
+			charBuf  [row][col] = 0;
 			chAttrBuf[row][col] = 0;
 		}
 		for (col = 0; col < SEGTERM_COLS; ++col) {
@@ -118,6 +117,7 @@ void initDisplay() {
 	brightness = 15;
 	xorMask = SEGTERM_XORMASK_DEFAULT;
 	lockLevel = 0;
+	blinkState = (millis() / SEGTERM_BLINK_RATE) & 1;
 
 	for (row = 0; row < SEGTERM_ROWS; ++row) {
 		si[row].i2c_init();
@@ -146,10 +146,11 @@ void initDisplay() {
 static uint8_t getRawChar(uint8_t row, uint8_t col) {
 	uint8_t attr, data;
 
-	attr = chAttrBuf[row][col >> 1];
-	if (col & 1) attr >>= 4;
-
-	if (attr & SEGTERM_CHATTR_HIDDEN) {
+	attr = chAttrBuf[row][col];
+	if (
+		(attr & SEGTERM_CHATTR_HIDDEN) ||
+		((attr & SEGTERM_CHATTR_BLINK) && blinkState)
+	) {
 		data = 0;
 	} else {
 		data = charBuf[row][col];
@@ -167,6 +168,7 @@ static uint8_t getRawChar(uint8_t row, uint8_t col) {
 		}
 	}
 
+	if (attr & SEGTERM_CHATTR_INVERT ) data ^= 0x7F;
 	if (attr & SEGTERM_CHATTR_XORMASK) data ^= xorMask;
 	if (attr & SEGTERM_CHATTR_DOT    ) data ^= 0x80;
 	return data;
@@ -308,31 +310,17 @@ void setChar(uint8_t row, uint8_t col, uint8_t ch) {
 }
 
 uint8_t getChAttr(uint8_t row, uint8_t col) {
-	uint8_t attr = chAttrBuf[row][col >> 1];
-	if (col & 1) attr >>= 4;
-	return attr & 15;
+	return chAttrBuf[row][col];
 }
 
 void setChAttr(uint8_t row, uint8_t col, uint8_t a) {
-	if (col & 1) {
-		chAttrBuf[row][col >> 1] &= 0x0F;
-		chAttrBuf[row][col >> 1] |= (a << 4);
-	} else {
-		chAttrBuf[row][col >> 1] &= 0xF0;
-		chAttrBuf[row][col >> 1] |= (a & 15);
-	}
+	chAttrBuf[row][col] = a;
 	if (!lockLevel) flushChar(row, col);
 }
 
 void setCharAndAttr(uint8_t row, uint8_t col, uint8_t ch, uint8_t a) {
-	charBuf[row][col] = ch;
-	if (col & 1) {
-		chAttrBuf[row][col >> 1] &= 0x0F;
-		chAttrBuf[row][col >> 1] |= (a << 4);
-	} else {
-		chAttrBuf[row][col >> 1] &= 0xF0;
-		chAttrBuf[row][col >> 1] |= (a & 15);
-	}
+	charBuf  [row][col] = ch;
+	chAttrBuf[row][col] = a;
 	if (!lockLevel) flushChar(row, col);
 }
 
@@ -465,14 +453,30 @@ uint8_t unlockScreen() {
 	return lockLevel;
 }
 
+void displayIdle() {
+	uint8_t newState, row, col, attr;
+	if (!lockLevel) {
+		newState = (millis() / SEGTERM_BLINK_RATE) & 1;
+		if (blinkState != newState) {
+			blinkState = newState;
+			for (row = 0; row < SEGTERM_ROWS; ++row) {
+				for (col = 0; col < (SEGTERM_COLS << 2); ++col) {
+					attr = chAttrBuf[row][col];
+					if ((attr & SEGTERM_CHATTR_BLINK) && !(attr & SEGTERM_CHATTR_HIDDEN)) {
+						flushChar(row, col);
+					}
+				}
+			}
+		}
+	}
+}
+
 void scrollRows(uint8_t top, uint8_t bottom, int8_t dir) {
 	uint8_t row; uint8_t col;
 	while (dir < 0) {
 		for (row = top; row < bottom - 1; ++row) {
 			for (col = 0; col < (SEGTERM_COLS << 2); ++col) {
-				charBuf[row][col] = charBuf[row + 1][col];
-			}
-			for (col = 0; col < (SEGTERM_COLS << 1); ++col) {
+				charBuf  [row][col] = charBuf  [row + 1][col];
 				chAttrBuf[row][col] = chAttrBuf[row + 1][col];
 			}
 			for (col = 0; col < SEGTERM_COLS; ++col) {
@@ -487,9 +491,7 @@ void scrollRows(uint8_t top, uint8_t bottom, int8_t dir) {
 	while (dir > 0) {
 		for (row = bottom - 1; row > top; --row) {
 			for (col = 0; col < (SEGTERM_COLS << 2); ++col) {
-				charBuf[row][col] = charBuf[row - 1][col];
-			}
-			for (col = 0; col < (SEGTERM_COLS << 1); ++col) {
+				charBuf  [row][col] = charBuf  [row - 1][col];
 				chAttrBuf[row][col] = chAttrBuf[row - 1][col];
 			}
 			for (col = 0; col < SEGTERM_COLS; ++col) {
@@ -509,8 +511,8 @@ void scrollCols(uint8_t row, uint8_t left, uint8_t right, int8_t dir) {
 	++lockLevel;
 	while (dir < 0) {
 		for (col = left; col < right - 1; ++col) {
-			charBuf[row][col] = charBuf[row][col + 1];
-			setChAttr(row, col, getChAttr(row, col + 1));
+			charBuf  [row][col] = charBuf  [row][col + 1];
+			chAttrBuf[row][col] = chAttrBuf[row][col + 1];
 			setMdAttr(row, (col >> 2), getMdAttr(row, ((col + 1) >> 2)));
 		}
 		charBuf[row][right - 1] = 0;
@@ -518,8 +520,8 @@ void scrollCols(uint8_t row, uint8_t left, uint8_t right, int8_t dir) {
 	}
 	while (dir > 0) {
 		for (col = right - 1; col > left; --col) {
-			charBuf[row][col] = charBuf[row][col - 1];
-			setChAttr(row, col, getChAttr(row, col - 1));
+			charBuf  [row][col] = charBuf  [row][col - 1];
+			chAttrBuf[row][col] = chAttrBuf[row][col - 1];
 			setMdAttr(row, (col >> 2), getMdAttr(row, ((col - 1) >> 2)));
 		}
 		charBuf[row][left] = 0;
@@ -533,9 +535,7 @@ void clearRows(uint8_t row1, uint8_t row2) {
 	uint8_t row; uint8_t col;
 	for (row = row1; row < row2; ++row) {
 		for (col = 0; col < (SEGTERM_COLS << 2); ++col) {
-			charBuf[row][col] = 0;
-		}
-		for (col = 0; col < (SEGTERM_COLS << 1); ++col) {
+			charBuf  [row][col] = 0;
 			chAttrBuf[row][col] = 0;
 		}
 		for (col = 0; col < SEGTERM_COLS; ++col) {
@@ -549,8 +549,8 @@ void clearCols(uint8_t row, uint8_t col1, uint8_t col2) {
 	uint8_t col;
 	++lockLevel;
 	for (col = col1; col < col2; ++col) {
-		charBuf[row][col] = 0;
-		setChAttr(row, col, 0);
+		charBuf  [row][col] = 0;
+		chAttrBuf[row][col] = 0;
 		setMdAttr(row, (col >> 2), 0xF0);
 	}
 	--lockLevel;
@@ -559,12 +559,9 @@ void clearCols(uint8_t row, uint8_t col1, uint8_t col2) {
 
 void fillScreen(uint8_t ch, uint8_t chattr, uint8_t mdattr) {
 	uint8_t row, col;
-	chattr &= 0x0F; chattr |= chattr << 4;
 	for (row = 0; row < SEGTERM_ROWS; ++row) {
 		for (col = 0; col < (SEGTERM_COLS << 2); ++col) {
-			charBuf[row][col] = ch;
-		}
-		for (col = 0; col < (SEGTERM_COLS << 1); ++col) {
+			charBuf  [row][col] = ch;
 			chAttrBuf[row][col] = chattr;
 		}
 		for (col = 0; col < SEGTERM_COLS; ++col) {

@@ -16,8 +16,10 @@
 #define SEGTERM_FONT_READABLE        0
 #define SEGTERM_FONT_DISTINCT        1
 
-#define SEGTERM_CHATTR_HIDDEN     0x08
-#define SEGTERM_CHATTR_RAW        0x04
+#define SEGTERM_CHATTR_HIDDEN     0x80
+#define SEGTERM_CHATTR_BLINK      0x40
+#define SEGTERM_CHATTR_RAW        0x08
+#define SEGTERM_CHATTR_INVERT     0x04
 #define SEGTERM_CHATTR_XORMASK    0x02
 #define SEGTERM_CHATTR_DOT        0x01
 
@@ -29,6 +31,7 @@
 #define SEGTERM_DOTMODE_UPPERCASE 0x02
 #define SEGTERM_DOTMODE_LOWERCASE 0x01
 
+#define SEGTERM_BLINK_RATE         500
 #define SEGTERM_XORMASK_DEFAULT   0x88
 
 void    initDisplay();
@@ -40,6 +43,7 @@ void    loadDisplaySettingsFromEEPROM(int addr);
 void    saveDisplaySettingsToEEPROM(int addr);
 uint8_t getFontChar(uint8_t ch);
 void    setFontChar(uint8_t ch, uint8_t data);
+
 uint8_t getChar(uint8_t row, uint8_t col);
 void    setChar(uint8_t row, uint8_t col, uint8_t ch);
 uint8_t getChAttr(uint8_t row, uint8_t col);
@@ -53,6 +57,7 @@ uint8_t getMdBlink(uint8_t row, uint8_t col);
 void    setMdBlink(uint8_t row, uint8_t col, uint8_t b);
 uint8_t getMdColon(uint8_t row, uint8_t col);
 void    setMdColon(uint8_t row, uint8_t col, uint8_t c);
+
 uint8_t getLcMode();
 void    setLcMode(uint8_t lc);
 uint8_t getDotMode();
@@ -61,8 +66,11 @@ uint8_t getBrightness();
 void    setBrightness(uint8_t b);
 uint8_t getXorMask();
 void    setXorMask(uint8_t m);
+
 uint8_t lockScreen();
 uint8_t unlockScreen();
+void    displayIdle();
+
 void    scrollRows(uint8_t top, uint8_t bottom, int8_t dir);
 void    scrollCols(uint8_t row, uint8_t left, uint8_t right, int8_t dir);
 void    clearRows(uint8_t row1, uint8_t row2);

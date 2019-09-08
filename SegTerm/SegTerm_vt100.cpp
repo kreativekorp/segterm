@@ -113,7 +113,9 @@ static void vtPrintChar(uint8_t raw, uint8_t ch) {
 	}
 	
 	if (txtAttr & VT100_ATTR_HIDDEN   ) chattr |= SEGTERM_CHATTR_HIDDEN;
+	if (txtAttr & VT100_ATTR_BLINK    ) chattr |= SEGTERM_CHATTR_BLINK;
 	if (raw                           ) chattr |= SEGTERM_CHATTR_RAW;
+	if (txtAttr & VT100_ATTR_REVERSE  ) chattr |= SEGTERM_CHATTR_INVERT;
 	if (txtAttr & VT100_ATTR_UNDERLINE) chattr |= SEGTERM_CHATTR_DOT;
 	
 	if (txtColor & VT100_COLOR_RED  ) mdattr += VT100_BRIGHTNESS_RED  ;
@@ -130,9 +132,6 @@ static void vtPrintChar(uint8_t raw, uint8_t ch) {
 	
 	mdattr /= 15;
 	mdattr <<= 4;
-	
-	if (txtAttr & VT100_ATTR_BLINK  ) mdattr |= 8;
-	if (txtAttr & VT100_ATTR_REVERSE) mdattr |= 3;
 	
 	setCharAndAttr(cursorY, cursorX, ch, chattr);
 	setMdAttr(cursorY, (cursorX >> 2), mdattr);
