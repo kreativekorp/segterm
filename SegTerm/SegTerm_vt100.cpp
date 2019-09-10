@@ -1000,6 +1000,52 @@ static void vtInputCSIBasic(uint8_t ch) {
 		//   n = 4, m =  6 - EIA port modem control line loopback test (VT220)
 		//   n = 4, m =  7 - 20mA port loopback test (VT220)
 		//   n = 4, m =  9 - repeat tests (VT220)
+		case 'y':
+			if (vtParam[0] == 7) {
+				switch (vtParam[1] &~ 0x08) {
+					case 1:
+						do {
+							uint8_t row, col;
+							fillScreen(0x01, SEGTERM_CHATTR_RAW,  (VT100_BRIGHTNESS_NORMAL<<4)   ); delay(500);
+							fillScreen(0x02, SEGTERM_CHATTR_RAW,  (VT100_BRIGHTNESS_NORMAL<<4)   ); delay(500);
+							fillScreen(0x04, SEGTERM_CHATTR_RAW,  (VT100_BRIGHTNESS_NORMAL<<4)   ); delay(500);
+							fillScreen(0x08, SEGTERM_CHATTR_RAW,  (VT100_BRIGHTNESS_NORMAL<<4)   ); delay(500);
+							fillScreen(0x10, SEGTERM_CHATTR_RAW,  (VT100_BRIGHTNESS_NORMAL<<4)   ); delay(500);
+							fillScreen(0x20, SEGTERM_CHATTR_RAW,  (VT100_BRIGHTNESS_NORMAL<<4)   ); delay(500);
+							fillScreen(0x40, SEGTERM_CHATTR_RAW,  (VT100_BRIGHTNESS_NORMAL<<4)   ); delay(500);
+							fillScreen(0x80, SEGTERM_CHATTR_RAW,  (VT100_BRIGHTNESS_NORMAL<<4)   ); delay(500);
+							fillScreen(0,    0,                  ((VT100_BRIGHTNESS_NORMAL<<4)|3)); delay(500);
+							fillScreen(0xFF, SEGTERM_CHATTR_RAW, ((VT100_BRIGHTNESS_NORMAL<<4)|3)); delay(500);
+							fillScreen(0,    0,                   (VT100_BRIGHTNESS_NORMAL<<4)   );
+							lockScreen();
+							for (row = 0; row < SEGTERM_ROWS; ++row) {
+								for (col = 0; col < (SEGTERM_COLS<<2); ++col) {
+									setCharAndAttr(row, col, 0xFF, SEGTERM_CHATTR_RAW);
+								}
+								unlockScreen();
+								delay(500);
+								lockScreen();
+								for (col = 0; col < (SEGTERM_COLS<<2); ++col) {
+									setCharAndAttr(row, col, 0, 0);
+								}
+							}
+							for (col = 0; col < (SEGTERM_COLS<<2); ++col) {
+								for (row = 0; row < SEGTERM_ROWS; ++row) {
+									setCharAndAttr(row, col, 0xFF, SEGTERM_CHATTR_RAW);
+								}
+								unlockScreen();
+								delay(500);
+								lockScreen();
+								for (row = 0; row < SEGTERM_ROWS; ++row) {
+									setCharAndAttr(row, col, 0, 0);
+								}
+							}
+							unlockScreen();
+						} while (vtParam[1] & 0x08);
+						break;
+				}
+			}
+			break;
 
 		// ESC [ <n> z - screen control (SegTerm extension)
 		case 'z':
