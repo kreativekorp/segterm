@@ -1017,14 +1017,11 @@ static void vtInputCSIBasic(uint8_t ch) {
 							fillScreen(0,    0,                  ((VT100_BRIGHTNESS_NORMAL<<4)|3)); delay(500);
 							fillScreen(0xFF, SEGTERM_CHATTR_RAW, ((VT100_BRIGHTNESS_NORMAL<<4)|3)); delay(500);
 							fillScreen(0,    0,                   (VT100_BRIGHTNESS_NORMAL<<4)   );
-							lockScreen();
 							for (row = 0; row < SEGTERM_ROWS; ++row) {
 								for (col = 0; col < (SEGTERM_COLS<<2); ++col) {
 									setCharAndAttr(row, col, 0xFF, SEGTERM_CHATTR_RAW);
 								}
-								unlockScreen();
 								delay(500);
-								lockScreen();
 								for (col = 0; col < (SEGTERM_COLS<<2); ++col) {
 									setCharAndAttr(row, col, 0, 0);
 								}
@@ -1033,14 +1030,11 @@ static void vtInputCSIBasic(uint8_t ch) {
 								for (row = 0; row < SEGTERM_ROWS; ++row) {
 									setCharAndAttr(row, col, 0xFF, SEGTERM_CHATTR_RAW);
 								}
-								unlockScreen();
 								delay(500);
-								lockScreen();
 								for (row = 0; row < SEGTERM_ROWS; ++row) {
 									setCharAndAttr(row, col, 0, 0);
 								}
 							}
-							unlockScreen();
 						} while (vtParam[1] & 0x08);
 						break;
 				}
