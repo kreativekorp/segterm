@@ -26,6 +26,9 @@ void loop() {
 		Serial.print(ch >> 4, HEX);
 		Serial.print(ch & 15, HEX);
 		ach[1] = keyboardEventToASCII(ch, getKeyboardModifiers());
+		Serial.print(" ");
+		Serial.print((ach[1] >> 4) & 15, HEX);
+		Serial.print(ach[1] & 15, HEX);
 		if (ach[1] < 32 || ach[1] >= 127) ach[1] = ' ';
 		Serial.print(ach);
 		Serial.print(&noteNames[(ch % 12) * 3]);
