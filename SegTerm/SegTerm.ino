@@ -54,8 +54,14 @@ static void handleKeyboardEvent(uint8_t ch) {
 				case KBD_ASCII_UP:    handleKeyboardEscSeq('A', mode); break;
 				case KBD_ASCII_DOWN:  handleKeyboardEscSeq('B', mode); break;
 				case KBD_ASCII_ENTER:
-					if (!(mod & KBD_MOD_CTRL)) handleKeyboardChar(13, mode);
-					if (!(mod & KBD_MOD_ALT )) handleKeyboardChar(10, mode);
+					if (mod & KBD_MOD_ALT) {
+						handleKeyboardChar(13, mode);
+						handleKeyboardChar(10, mode);
+					} else if (mod & KBD_MOD_CTRL) {
+						handleKeyboardChar(10, mode);
+					} else {
+						handleKeyboardChar(13, mode);
+					}
 					break;
 			}
 		}
