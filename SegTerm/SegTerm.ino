@@ -17,7 +17,7 @@ void setup() {
 	loadDisplaySettingsFromEEPROM(0);
 	initVT100();
 	if (getButtons() & BUTTON_2) vtPrint("\x1B[7;9y");
-	Serial.begin(9600);
+	Serial.begin(1200);
 }
 
 static void handleKeyboardChar(uint8_t ch, uint8_t mode) {

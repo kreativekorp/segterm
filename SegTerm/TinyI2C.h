@@ -6,7 +6,6 @@
 
 #define I2C_READ  1
 #define I2C_WRITE 0
-#define I2C_DELAY 4
 
 class TinyI2C {
 	public:

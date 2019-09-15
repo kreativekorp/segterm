@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <inttypes.h>
-#include <util/delay.h>
 #include "TinyI2C.h"
 
 TinyI2C::TinyI2C(
@@ -31,14 +30,13 @@ TinyI2C::TinyI2C(
 #define _sclRead() (*_scl_pin & _scl_mask)
 
 uint8_t TinyI2C::init() {
-	_sdaLow();  _sclLow();  _delay_us(I2C_DELAY);
-	_sdaHigh(); _sclHigh(); _delay_us(I2C_DELAY);
+	_sdaLow();  _sclLow();
+	_sdaHigh(); _sclHigh();
 	return _sdaRead() && _sclRead();
 }
 
 uint8_t TinyI2C::start(uint8_t addr) {
 	_sdaLow();
-	_delay_us(I2C_DELAY);
 	_sclLow();
 	return write(addr);
 }
@@ -46,7 +44,6 @@ uint8_t TinyI2C::start(uint8_t addr) {
 uint8_t TinyI2C::restart(uint8_t addr) {
 	_sdaHigh();
 	_sclHigh();
-	_delay_us(I2C_DELAY);
 	return start(addr);
 }
 
@@ -56,15 +53,12 @@ uint8_t TinyI2C::write(uint8_t value) {
 		if (value & m) _sdaHigh();
 		else           _sdaLow();
 		_sclHigh();
-		_delay_us(I2C_DELAY);
 		_sclLow();
 	}
 	_sdaHigh();
 	_sclHigh();
-	_delay_us((I2C_DELAY >> 1));
 	m = _sdaRead();
 	_sclLow();
-	_delay_us((I2C_DELAY >> 1));
 	_sdaLow();
 	return !m;
 }
@@ -74,7 +68,6 @@ uint8_t TinyI2C::read(uint8_t last) {
 	_sdaHigh();
 	for (i = 0; i < 8; ++i) {
 		b <<= 1;
-		_delay_us(I2C_DELAY);
 		_sclHigh();
 		if (_sdaRead()) b |= 1;
 		_sclLow();
@@ -82,17 +75,15 @@ uint8_t TinyI2C::read(uint8_t last) {
 	if (last) _sdaHigh();
 	else      _sdaLow();
 	_sclHigh();
-	_delay_us((I2C_DELAY >> 1));
 	_sclLow();
-	_delay_us((I2C_DELAY >> 1));
 	_sdaLow();
 	return b;
 }
 
 void TinyI2C::stop() {
-	_sdaLow();  _delay_us(I2C_DELAY);
-	_sclHigh(); _delay_us(I2C_DELAY);
-	_sdaHigh(); _delay_us(I2C_DELAY);
+	_sdaLow();
+	_sclHigh();
+	_sdaHigh();
 }
 
 #undef _sdaHigh
