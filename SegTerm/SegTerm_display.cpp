@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <EEPROM.h>
 #include <avr/pgmspace.h>
 #include <inttypes.h>

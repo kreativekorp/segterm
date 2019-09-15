@@ -1,6 +1,7 @@
 #ifndef __KEYBOARD_LIB_H__
 #define __KEYBOARD_LIB_H__
 
+#include <Arduino.h>
 #include <inttypes.h>
 
 // Arduino Mega D15
