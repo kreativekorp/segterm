@@ -58,7 +58,7 @@ static void handleKeyboardEvent(uint8_t ch) {
 bool terminal_setup() {
 	Serial.begin(TERMINAL_BAUD_RATE);
 	clearRows(0, SEGTERM_ROWS);
-	vtSetCursor(0, 0);
+	initVT100();
 	return true;
 }
 
@@ -81,6 +81,6 @@ bool terminal_loop() {
 
 void terminal_quit() {
 	clearRows(0, SEGTERM_ROWS);
-	vtSetCursor(0, 0);
+	initVT100();
 	Serial.end();
 }
