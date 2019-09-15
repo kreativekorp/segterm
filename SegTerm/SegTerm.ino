@@ -8,7 +8,7 @@
 #include "SegTerm_config.h"
 #include "SegTerm_display.h"
 #include "SegTerm_vt100.h"
-#include "SlowSoftI2CMaster.h"
+#include "TinyI2C.h"
 
 void setup() {
 	initKeyboard();

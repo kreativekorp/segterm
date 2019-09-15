@@ -3,7 +3,7 @@
 #include <inttypes.h>
 #include "SegTerm_config.h"
 #include "SegTerm_display.h"
-#include "SlowSoftI2CMaster.h"
+#include "TinyI2C.h"
 
 static const uint8_t FONT_A[] PROGMEM = {
 	0x00, 0x0A, 0x22, 0x36, 0x2D, 0x24, 0x78, 0x42,
@@ -46,54 +46,54 @@ static uint8_t xorMask;
 static uint8_t lockLevel;
 static uint8_t blinkState;
 
-static SlowSoftI2CMaster si[] = {
+static TinyI2C si[] = {
 #if SEGTERM_ROWS >= 1
-	SlowSoftI2CMaster(22, 23, true),
+	TinyI2C(&DDRA, &PORTA, &PINA, (1<<0), &DDRA, &PORTA, &PINA, (1<<1)),
 #endif
 #if SEGTERM_ROWS >= 2
-	SlowSoftI2CMaster(24, 25, true),
+	TinyI2C(&DDRA, &PORTA, &PINA, (1<<2), &DDRA, &PORTA, &PINA, (1<<3)),
 #endif
 #if SEGTERM_ROWS >= 3
-	SlowSoftI2CMaster(26, 27, true),
+	TinyI2C(&DDRA, &PORTA, &PINA, (1<<4), &DDRA, &PORTA, &PINA, (1<<5)),
 #endif
 #if SEGTERM_ROWS >= 4
-	SlowSoftI2CMaster(28, 29, true),
+	TinyI2C(&DDRA, &PORTA, &PINA, (1<<6), &DDRA, &PORTA, &PINA, (1<<7)),
 #endif
 #if SEGTERM_ROWS >= 5
-	SlowSoftI2CMaster(30, 31, true),
+	TinyI2C(&DDRC, &PORTC, &PINC, (1<<7), &DDRC, &PORTC, &PINC, (1<<6)),
 #endif
 #if SEGTERM_ROWS >= 6
-	SlowSoftI2CMaster(32, 33, true),
+	TinyI2C(&DDRC, &PORTC, &PINC, (1<<5), &DDRC, &PORTC, &PINC, (1<<4)),
 #endif
 #if SEGTERM_ROWS >= 7
-	SlowSoftI2CMaster(34, 35, true),
+	TinyI2C(&DDRC, &PORTC, &PINC, (1<<3), &DDRC, &PORTC, &PINC, (1<<2)),
 #endif
 #if SEGTERM_ROWS >= 8
-	SlowSoftI2CMaster(36, 37, true),
+	TinyI2C(&DDRC, &PORTC, &PINC, (1<<1), &DDRC, &PORTC, &PINC, (1<<0)),
 #endif
 #if SEGTERM_ROWS >= 9
-	SlowSoftI2CMaster(38, 39, true),
+	TinyI2C(&DDRD, &PORTD, &PIND, (1<<7), &DDRG, &PORTG, &PING, (1<<2)),
 #endif
 #if SEGTERM_ROWS >= 10
-	SlowSoftI2CMaster(40, 41, true),
+	TinyI2C(&DDRG, &PORTG, &PING, (1<<1), &DDRG, &PORTG, &PING, (1<<0)),
 #endif
 #if SEGTERM_ROWS >= 11
-	SlowSoftI2CMaster(42, 43, true),
+	TinyI2C(&DDRL, &PORTL, &PINL, (1<<7), &DDRL, &PORTL, &PINL, (1<<6)),
 #endif
 #if SEGTERM_ROWS >= 12
-	SlowSoftI2CMaster(44, 45, true),
+	TinyI2C(&DDRL, &PORTL, &PINL, (1<<5), &DDRL, &PORTL, &PINL, (1<<4)),
 #endif
 #if SEGTERM_ROWS >= 13
-	SlowSoftI2CMaster(46, 47, true),
+	TinyI2C(&DDRL, &PORTL, &PINL, (1<<3), &DDRL, &PORTL, &PINL, (1<<2)),
 #endif
 #if SEGTERM_ROWS >= 14
-	SlowSoftI2CMaster(48, 49, true),
+	TinyI2C(&DDRL, &PORTL, &PINL, (1<<1), &DDRL, &PORTL, &PINL, (1<<0)),
 #endif
 #if SEGTERM_ROWS >= 15
-	SlowSoftI2CMaster(50, 51, true),
+	TinyI2C(&DDRB, &PORTB, &PINB, (1<<3), &DDRB, &PORTB, &PINB, (1<<2)),
 #endif
 #if SEGTERM_ROWS >= 16
-	SlowSoftI2CMaster(52, 53, true),
+	TinyI2C(&DDRB, &PORTB, &PINB, (1<<1), &DDRB, &PORTB, &PINB, (1<<0)),
 #endif
 };
 
@@ -120,23 +120,23 @@ void initDisplay() {
 	blinkState = (millis() / SEGTERM_BLINK_RATE) & 1;
 
 	for (row = 0; row < SEGTERM_ROWS; ++row) {
-		si[row].i2c_init();
+		si[row].init();
 		for (col = 0; col < SEGTERM_COLS; ++col) {
 			addr = HT16K33_BASE_ADDRESS | (col << 1);
-			si[row].i2c_start(addr);
-			si[row].i2c_write(HT16K33_START_OSCILLATOR);
-			si[row].i2c_rep_start(addr);
-			si[row].i2c_write(0);
-			si[row].i2c_write(0); si[row].i2c_write(0);
-			si[row].i2c_write(0); si[row].i2c_write(0);
-			si[row].i2c_write(0); si[row].i2c_write(0);
-			si[row].i2c_write(0); si[row].i2c_write(0);
-			si[row].i2c_write(0); si[row].i2c_write(0);
-			si[row].i2c_rep_start(addr);
-			si[row].i2c_write(HT16K33_CMD_BRIGHTNESS | 15);
-			si[row].i2c_rep_start(addr);
-			si[row].i2c_write(HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON);
-			si[row].i2c_stop();
+			si[row].start(addr);
+			si[row].write(HT16K33_START_OSCILLATOR);
+			si[row].restart(addr);
+			si[row].write(0);
+			si[row].write(0); si[row].write(0);
+			si[row].write(0); si[row].write(0);
+			si[row].write(0); si[row].write(0);
+			si[row].write(0); si[row].write(0);
+			si[row].write(0); si[row].write(0);
+			si[row].restart(addr);
+			si[row].write(HT16K33_CMD_BRIGHTNESS | 15);
+			si[row].restart(addr);
+			si[row].write(HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON);
+			si[row].stop();
 		}
 	}
 }
@@ -180,11 +180,11 @@ static void flushChar(uint8_t row, uint8_t col) {
 	addr = HT16K33_BASE_ADDRESS | (col << 1);
 	reg = chcol & 3; if (reg >= 2) ++reg; reg <<= 1;
 	data = getRawChar(row, chcol);
-	si[row].i2c_start(addr);
-	si[row].i2c_write(reg);
-	si[row].i2c_write(data);
-	si[row].i2c_write(0);
-	si[row].i2c_stop();
+	si[row].start(addr);
+	si[row].write(reg);
+	si[row].write(data);
+	si[row].write(0);
+	si[row].stop();
 }
 
 static void flushRow(uint8_t row) {
@@ -200,18 +200,18 @@ static void flushRow(uint8_t row) {
 		bl = ((attr >> 1) & 6);
 		co = (attr & 3);
 		addr = HT16K33_BASE_ADDRESS | (col << 1);
-		si[row].i2c_start(addr);
-		si[row].i2c_write(0);
-		si[row].i2c_write(d0); si[row].i2c_write(0);
-		si[row].i2c_write(d1); si[row].i2c_write(0);
-		si[row].i2c_write(co); si[row].i2c_write(0);
-		si[row].i2c_write(d2); si[row].i2c_write(0);
-		si[row].i2c_write(d3); si[row].i2c_write(0);
-		si[row].i2c_rep_start(addr);
-		si[row].i2c_write(HT16K33_CMD_BRIGHTNESS | br);
-		si[row].i2c_rep_start(addr);
-		si[row].i2c_write(HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | bl);
-		si[row].i2c_stop();
+		si[row].start(addr);
+		si[row].write(0);
+		si[row].write(d0); si[row].write(0);
+		si[row].write(d1); si[row].write(0);
+		si[row].write(co); si[row].write(0);
+		si[row].write(d2); si[row].write(0);
+		si[row].write(d3); si[row].write(0);
+		si[row].restart(addr);
+		si[row].write(HT16K33_CMD_BRIGHTNESS | br);
+		si[row].restart(addr);
+		si[row].write(HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | bl);
+		si[row].stop();
 	}
 }
 
@@ -334,15 +334,15 @@ void setMdAttr(uint8_t row, uint8_t col, uint8_t a) {
 		uint8_t addr = HT16K33_BASE_ADDRESS | (col << 1);
 		uint8_t br = (((a >> 4) & 15) * brightness) / 15;
 		uint8_t bl = ((a >> 1) & 6);
-		si[row].i2c_start(addr);
-		si[row].i2c_write(4);
-		si[row].i2c_write(a & 3);
-		si[row].i2c_write(0);
-		si[row].i2c_rep_start(addr);
-		si[row].i2c_write(HT16K33_CMD_BRIGHTNESS | br);
-		si[row].i2c_rep_start(addr);
-		si[row].i2c_write(HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | bl);
-		si[row].i2c_stop();
+		si[row].start(addr);
+		si[row].write(4);
+		si[row].write(a & 3);
+		si[row].write(0);
+		si[row].restart(addr);
+		si[row].write(HT16K33_CMD_BRIGHTNESS | br);
+		si[row].restart(addr);
+		si[row].write(HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | bl);
+		si[row].stop();
 	}
 }
 
@@ -356,9 +356,9 @@ void setMdBright(uint8_t row, uint8_t col, uint8_t b) {
 	if (!lockLevel) {
 		uint8_t addr = HT16K33_BASE_ADDRESS | (col << 1);
 		uint8_t br = ((b & 15) * brightness) / 15;
-		si[row].i2c_start(addr);
-		si[row].i2c_write(HT16K33_CMD_BRIGHTNESS | br);
-		si[row].i2c_stop();
+		si[row].start(addr);
+		si[row].write(HT16K33_CMD_BRIGHTNESS | br);
+		si[row].stop();
 	}
 }
 
@@ -372,9 +372,9 @@ void setMdBlink(uint8_t row, uint8_t col, uint8_t b) {
 	if (!lockLevel) {
 		uint8_t addr = HT16K33_BASE_ADDRESS | (col << 1);
 		uint8_t bl = ((b & 3) << 1);
-		si[row].i2c_start(addr);
-		si[row].i2c_write(HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | bl);
-		si[row].i2c_stop();
+		si[row].start(addr);
+		si[row].write(HT16K33_BLINK_CMD | HT16K33_BLINK_DISPLAYON | bl);
+		si[row].stop();
 	}
 }
 
@@ -387,11 +387,11 @@ void setMdColon(uint8_t row, uint8_t col, uint8_t c) {
 	mdAttrBuf[row][col] |= (c & 3);
 	if (!lockLevel) {
 		uint8_t addr = HT16K33_BASE_ADDRESS | (col << 1);
-		si[row].i2c_start(addr);
-		si[row].i2c_write(4);
-		si[row].i2c_write(c & 3);
-		si[row].i2c_write(0);
-		si[row].i2c_stop();
+		si[row].start(addr);
+		si[row].write(4);
+		si[row].write(c & 3);
+		si[row].write(0);
+		si[row].stop();
 	}
 }
 
@@ -425,9 +425,9 @@ void setBrightness(uint8_t b) {
 				uint8_t addr = HT16K33_BASE_ADDRESS | (col << 1);
 				uint8_t attr = mdAttrBuf[row][col];
 				uint8_t br = (((attr >> 4) & 15) * brightness) / 15;
-				si[row].i2c_start(addr);
-				si[row].i2c_write(HT16K33_CMD_BRIGHTNESS | br);
-				si[row].i2c_stop();
+				si[row].start(addr);
+				si[row].write(HT16K33_CMD_BRIGHTNESS | br);
+				si[row].stop();
 			}
 		}
 	}
