@@ -971,11 +971,11 @@ static void vtInputCSIBasic(uint8_t ch) {
 		// ESC [ <n> w - font control (SegTerm extension)
 		case 'w':
 			switch (vtParam[0]) {
-				case 1: loadFont(0);
-				case 2: loadFont(1);
-				case 10: loadFont(0);
-				case 20: loadFontFromEEPROM( ((int)(vtParam[1]+1)) << 4 ); break;
-				case 30: saveFontToEEPROM  ( ((int)(vtParam[1]+1)) << 4 ); break;
+				case 1: loadFont(0); break;
+				case 2: loadFont(1); break;
+				case 10: loadFont(0); break;
+				case 11: loadFontFromEEPROM(16); break;
+				case 12: saveFontToEEPROM(16); break;
 			}
 			break;
 
@@ -1048,8 +1048,8 @@ static void vtInputCSIBasic(uint8_t ch) {
 				case 2: unlockScreen(); break;
 				case 3: while (unlockScreen()); break;
 				case 10: loadDefaultDisplaySettings(); break;
-				case 20: loadDisplaySettingsFromEEPROM( ((int)vtParam[1]) << 4 ); break;
-				case 30: saveDisplaySettingsToEEPROM  ( ((int)vtParam[1]) << 4 ); break;
+				case 11: loadDisplaySettingsFromEEPROM(0); break;
+				case 12: saveDisplaySettingsToEEPROM(0); break;
 			}
 			break;
 

@@ -238,6 +238,5 @@ char keyboardEventToASCII(uint8_t evt, uint8_t mod) {
 	        : pgm_read_byte(&ASCII_UNSHIFTED[evt & KBD_KEY]);
 	if ((mod & KBD_MOD_CAPS) && ch >= 'a' && ch <= 'z') ch -= 32;
 	if ((mod & KBD_MOD_CTRL) && ch >= '@' && ch <= '~') ch &= 0x1F;
-	if (mod & KBD_MOD_ALT) ch |= 0x80;
 	return ch;
 }
