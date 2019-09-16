@@ -11,21 +11,24 @@
 #include "SegTerm_eeprom.h"
 #include "SegTerm_rtc.h"
 #include "SegTerm_vt100.h"
+#include "STApp_clock.h"
 #include "STApp_terminal.h"
 #include "TinyI2C.h"
 
 void setup() {
+	randomSeed(analogRead(2));
 	initKeyboard();
 	initButtons();
 	initDisplay();
 	loadDisplaySettingsFromEEPROM();
+	initRTC();
 	initVT100();
 	if (getButtons() & BUTTON_2) vtPrint("\x1B[7;9y");
 }
 
 void loop() {
-	if (terminal_setup()) {
-		while (terminal_loop());
-		terminal_quit();
+	if (clock_setup()) {
+		while (clock_loop());
+		clock_quit();
 	}
 }

@@ -9,6 +9,8 @@
 #define AM  1
 #define PM  2
 
+void initRTC();
+
 uint8_t daysInMonth(
 	uint8_t c, uint8_t y, uint8_t m,
 	uint8_t bcd

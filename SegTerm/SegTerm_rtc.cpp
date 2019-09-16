@@ -4,6 +4,10 @@
 #include "SegTerm_eeprom.h"
 #include "SegTerm_rtc.h"
 
+void initRTC() {
+	Wire.begin();
+}
+
 uint8_t daysInMonth(
 	uint8_t c, uint8_t y, uint8_t m,
 	uint8_t bcd
