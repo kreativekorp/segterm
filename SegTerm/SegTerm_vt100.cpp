@@ -1049,9 +1049,9 @@ static void vtInputCSIBasic(uint8_t ch) {
 		// ESC [ <n> z - screen control (SegTerm extension)
 		case 'z':
 			switch (vtParam[0]) {
-				case 1: lockScreen(); break;
-				case 2: unlockScreen(); break;
-				case 3: while (unlockScreen()); break;
+				case 0: while (unlockScreen()); break;
+				case 1: unlockScreen(); break;
+				case 2: lockScreen(); break;
 				case 10: loadDefaultDisplaySettings(); break;
 				case 11: loadDisplaySettingsFromEEPROM(); break;
 				case 12: saveDisplaySettingsToEEPROM(); break;
