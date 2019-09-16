@@ -25,11 +25,10 @@ static void handleKeyboardEscSeq(uint8_t ch, uint8_t mode) {
 	if (mode & VT100_MODE_LOCAL_ECHO) vtPutChar(ch);
 }
 
-static void handleKeyboardEvent(uint8_t ch) {
+static void handleKeyboardEvent(uint8_t ch, uint8_t mod) {
 	if (ch & KBD_PRESSED) {
 		uint8_t mode = vtGetMode();
 		if (!(mode & VT100_MODE_KEYBOARD_LOCK)) {
-			uint8_t mod = getKeyboardModifiers();
 			ch = keyboardEventToASCII(ch, mod);
 			if (ch >= 32) handleKeyboardChar(ch, mode);
 			else switch (ch) {
@@ -63,8 +62,20 @@ bool terminal_setup() {
 }
 
 bool terminal_loop() {
-	uint8_t ch;
-	while ((ch = readKeyboardEvent())) handleKeyboardEvent(ch);
+	uint8_t ch, mod;
+	while ((ch = readKeyboardEvent())) {
+		mod = getKeyboardModifiers();
+		if (
+			ch == (KBD_KEY_ESC | KBD_PRESSED)
+			&& (mod & KBD_MOD_CTRL)
+			&& (mod & KBD_MOD_ALT)
+		) {
+			while (readKeyboardEvent() != (KBD_KEY_ESC | KBD_RELEASED));
+			return false;
+		}
+		handleKeyboardEvent(ch, mod);
+	}
+
 	while (Serial.available() > 0) vtPutChar(Serial.read());
 	while ((ch = vtGetChar())) Serial.write(ch);
 	vtIdle();

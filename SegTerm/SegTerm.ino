@@ -27,8 +27,8 @@ void setup() {
 }
 
 void loop() {
-	if (clock_setup()) {
-		while (clock_loop());
-		clock_quit();
+	if (terminal_setup()) {
+		while (terminal_loop());
+		terminal_quit();
 	}
 }
