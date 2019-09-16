@@ -2,6 +2,7 @@
 #include <inttypes.h>
 #include "SegTerm_config.h"
 #include "SegTerm_display.h"
+#include "SegTerm_eeprom.h"
 #include "SegTerm_vt100.h"
 
 static uint8_t vtMode;
@@ -974,8 +975,8 @@ static void vtInputCSIBasic(uint8_t ch) {
 				case 1: loadFont(0); break;
 				case 2: loadFont(1); break;
 				case 10: loadFont(0); break;
-				case 11: loadFontFromEEPROM(16); break;
-				case 12: saveFontToEEPROM(16); break;
+				case 11: loadFontFromEEPROM(EE_FONT); break;
+				case 12: saveFontToEEPROM(EE_FONT); break;
 			}
 			break;
 
@@ -1048,8 +1049,8 @@ static void vtInputCSIBasic(uint8_t ch) {
 				case 2: unlockScreen(); break;
 				case 3: while (unlockScreen()); break;
 				case 10: loadDefaultDisplaySettings(); break;
-				case 11: loadDisplaySettingsFromEEPROM(0); break;
-				case 12: saveDisplaySettingsToEEPROM(0); break;
+				case 11: loadDisplaySettingsFromEEPROM(); break;
+				case 12: saveDisplaySettingsToEEPROM(); break;
 			}
 			break;
 

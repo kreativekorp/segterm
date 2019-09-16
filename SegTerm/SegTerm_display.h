@@ -39,8 +39,8 @@ void    loadFont(uint8_t font);
 void    loadFontFromEEPROM(int addr);
 void    saveFontToEEPROM(int addr);
 void    loadDefaultDisplaySettings();
-void    loadDisplaySettingsFromEEPROM(int addr);
-void    saveDisplaySettingsToEEPROM(int addr);
+void    loadDisplaySettingsFromEEPROM();
+void    saveDisplaySettingsToEEPROM();
 uint8_t getFontChar(uint8_t ch);
 void    setFontChar(uint8_t ch, uint8_t data);
 

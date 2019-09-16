@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include "SegTerm_config.h"
 #include "SegTerm_display.h"
+#include "SegTerm_eeprom.h"
 #include "TinyI2C.h"
 
 static const uint8_t FONT_A[] PROGMEM = {
@@ -224,12 +225,6 @@ static void flushScreen() {
 	flushRows(0, SEGTERM_ROWS);
 }
 
-static void EEPROMwrite(const int addr, const uint8_t val) {
-	if (EEPROM.read(addr) != val) {
-		EEPROM.write(addr, val);
-	}
-}
-
 /******************************** PUBLIC API ********************************/
 
 void loadFont(uint8_t fn) {
@@ -263,14 +258,14 @@ void loadDefaultDisplaySettings() {
 	if (!lockLevel) flushScreen();
 }
 
-void loadDisplaySettingsFromEEPROM(int addr) {
-	if (EEPROM.read(addr++) == 0x57) {
-		if (EEPROM.read(addr++) == 0xEE) {
-			lcMode = EEPROM.read(addr++);
-			dotMode = EEPROM.read(addr++);
-			brightness = EEPROM.read(addr++);
-			xorMask = EEPROM.read(addr++);
-			loadFontFromEEPROM(addr + 10);
+void loadDisplaySettingsFromEEPROM() {
+	if (EEPROM.read(EE_CHECK1) == 0x57) {
+		if (EEPROM.read(EE_CHECK2) == 0xEE) {
+			lcMode = EEPROM.read(EE_LCMODE);
+			dotMode = EEPROM.read(EE_DOTMODE);
+			brightness = EEPROM.read(EE_BRIGHTNESS);
+			xorMask = EEPROM.read(EE_XORMASK);
+			loadFontFromEEPROM(EE_FONT);
 			if (!lockLevel) flushScreen();
 			return;
 		}
@@ -278,14 +273,14 @@ void loadDisplaySettingsFromEEPROM(int addr) {
 	loadDefaultDisplaySettings();
 }
 
-void saveDisplaySettingsToEEPROM(int addr) {
-	EEPROMwrite(addr++, 0x57);
-	EEPROMwrite(addr++, 0xEE);
-	EEPROMwrite(addr++, lcMode);
-	EEPROMwrite(addr++, dotMode);
-	EEPROMwrite(addr++, brightness);
-	EEPROMwrite(addr++, xorMask);
-	saveFontToEEPROM(addr + 10);
+void saveDisplaySettingsToEEPROM() {
+	EEPROMwrite(EE_CHECK1, 0x57);
+	EEPROMwrite(EE_CHECK2, 0xEE);
+	EEPROMwrite(EE_LCMODE, lcMode);
+	EEPROMwrite(EE_DOTMODE, dotMode);
+	EEPROMwrite(EE_BRIGHTNESS, brightness);
+	EEPROMwrite(EE_XORMASK, xorMask);
+	saveFontToEEPROM(EE_FONT);
 }
 
 uint8_t getFontChar(uint8_t ch) {
