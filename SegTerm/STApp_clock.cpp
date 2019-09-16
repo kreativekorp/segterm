@@ -9,6 +9,7 @@
 
 bool clock_setup() {
 	clearRows(0, SEGTERM_ROWS);
+	return true;
 }
 
 bool clock_loop() {
@@ -44,6 +45,7 @@ bool clock_loop() {
 	setChar(row, (col|3), 0);
 	setChAttr(row, (col|3), 0);
 	setMdColon(row, (col>>2), 0);
+	return true;
 }
 
 void clock_quit() {
