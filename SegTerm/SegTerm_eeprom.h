@@ -9,7 +9,13 @@
 #define EE_DOTMODE     3
 #define EE_BRIGHTNESS  4
 #define EE_XORMASK     5
+#define EE_CHECK3      6
+#define EE_VTMODE      7
 #define EE_FONT       16
+
+#define EE_CHECK1_VALUE 0x57
+#define EE_CHECK2_VALUE 0xEE
+#define EE_CHECK3_VALUE 0x87
 
 void EEPROMwrite(const int addr, const uint8_t val);
 

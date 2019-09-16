@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <EEPROM.h>
 #include <inttypes.h>
 #include "SegTerm_config.h"
 #include "SegTerm_display.h"
@@ -28,7 +29,10 @@ static unsigned long lastBlinkTime;
 
 void initVT100() {
 	uint8_t i;
-	vtMode = VT100_MODE_DEFAULT;
+	vtMode = (
+		(EEPROM.read(EE_CHECK3) == EE_CHECK3_VALUE) ?
+		EEPROM.read(EE_VTMODE) : VT100_MODE_DEFAULT
+	);
 	vtState = VT100_STATE_BASE;
 	vtOutBufStart = 0;
 	vtOutBufEnd = 0;
@@ -1051,6 +1055,9 @@ static void vtInputCSIBasic(uint8_t ch) {
 				case 10: loadDefaultDisplaySettings(); break;
 				case 11: loadDisplaySettingsFromEEPROM(); break;
 				case 12: saveDisplaySettingsToEEPROM(); break;
+				case 20: vtMode = VT100_MODE_DEFAULT; break;
+				case 21: vtLoadMode(); break;
+				case 22: vtSaveMode(); break;
 			}
 			break;
 
@@ -1488,6 +1495,18 @@ void vtSetAttributes(uint8_t attr) {
 
 void vtSetTextColor(uint8_t color) {
 	txtColor = color;
+}
+
+void vtLoadMode() {
+	vtMode = (
+		(EEPROM.read(EE_CHECK3) == EE_CHECK3_VALUE) ?
+		EEPROM.read(EE_VTMODE) : VT100_MODE_DEFAULT
+	);
+}
+
+void vtSaveMode() {
+	EEPROMwrite(EE_CHECK3, EE_CHECK3_VALUE);
+	EEPROMwrite(EE_VTMODE, vtMode);
 }
 
 void vtPutChar(uint8_t ch) {

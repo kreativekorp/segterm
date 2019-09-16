@@ -259,8 +259,8 @@ void loadDefaultDisplaySettings() {
 }
 
 void loadDisplaySettingsFromEEPROM() {
-	if (EEPROM.read(EE_CHECK1) == 0x57) {
-		if (EEPROM.read(EE_CHECK2) == 0xEE) {
+	if (EEPROM.read(EE_CHECK1) == EE_CHECK1_VALUE) {
+		if (EEPROM.read(EE_CHECK2) == EE_CHECK2_VALUE) {
 			lcMode = EEPROM.read(EE_LCMODE);
 			dotMode = EEPROM.read(EE_DOTMODE);
 			brightness = EEPROM.read(EE_BRIGHTNESS);
@@ -274,8 +274,8 @@ void loadDisplaySettingsFromEEPROM() {
 }
 
 void saveDisplaySettingsToEEPROM() {
-	EEPROMwrite(EE_CHECK1, 0x57);
-	EEPROMwrite(EE_CHECK2, 0xEE);
+	EEPROMwrite(EE_CHECK1, EE_CHECK1_VALUE);
+	EEPROMwrite(EE_CHECK2, EE_CHECK2_VALUE);
 	EEPROMwrite(EE_LCMODE, lcMode);
 	EEPROMwrite(EE_DOTMODE, dotMode);
 	EEPROMwrite(EE_BRIGHTNESS, brightness);

@@ -75,6 +75,8 @@ void    vtSetCursorX(uint8_t x);
 void    vtSetAttrAndColor(uint8_t attr, uint8_t color);
 void    vtSetAttributes(uint8_t attr);
 void    vtSetTextColor(uint8_t color);
+void    vtLoadMode();
+void    vtSaveMode();
 
 void    vtPutChar(uint8_t ch);
 void    vtPrint(const char * s);
