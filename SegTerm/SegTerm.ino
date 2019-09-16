@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <EEPROM.h>
+#include <Wire.h>
 #include <avr/pgmspace.h>
 #include <inttypes.h>
 #include <util/delay.h>
@@ -8,6 +9,7 @@
 #include "SegTerm_config.h"
 #include "SegTerm_display.h"
 #include "SegTerm_eeprom.h"
+#include "SegTerm_rtc.h"
 #include "SegTerm_vt100.h"
 #include "STApp_terminal.h"
 #include "TinyI2C.h"

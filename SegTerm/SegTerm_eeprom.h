@@ -11,6 +11,8 @@
 #define EE_XORMASK     5
 #define EE_CHECK3      6
 #define EE_VTMODE      7
+#define EE_CENTURY     8
+#define EE_FIRSTDAY    9
 #define EE_FONT       16
 
 #define EE_CHECK1_VALUE 0x57
