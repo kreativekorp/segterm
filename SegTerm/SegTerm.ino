@@ -5,6 +5,7 @@
 #include <inttypes.h>
 #include <util/delay.h>
 #include "KeyboardLib.h"
+#include "PlayduinoLib.h"
 #include "SegTerm_buttons.h"
 #include "SegTerm_config.h"
 #include "SegTerm_display.h"
@@ -14,6 +15,7 @@
 #include "STApp_calendar.h"
 #include "STApp_clock.h"
 #include "STApp_launcher.h"
+#include "STApp_play.h"
 #include "STApp_terminal.h"
 #include "TinyI2C.h"
 
@@ -25,7 +27,17 @@ void setup() {
 	loadDisplaySettingsFromEEPROM();
 	initRTC();
 	initVT100();
-	if (getButtons() & BUTTON_2) vtPrint("\x1B[7;9y");
+	
+	uint8_t ch;
+	if ((ch = getButtons())) {
+		switch (ch) {
+			case BUTTON_1: EEPROMwrite(EE_CURRAPP, 255); break;
+			case BUTTON_2: vtPrint("\x1B[7;9y"); break;
+		}
+		delay(KBD_DEBOUNCE_DELAY);
+		while (getButtons() & ch);
+		delay(KBD_DEBOUNCE_DELAY);
+	}
 }
 
 void loop() {
