@@ -11,6 +11,7 @@
 #include "SegTerm_eeprom.h"
 #include "SegTerm_rtc.h"
 #include "SegTerm_vt100.h"
+#include "STApp_calendar.h"
 #include "STApp_clock.h"
 #include "STApp_terminal.h"
 #include "TinyI2C.h"
@@ -27,8 +28,8 @@ void setup() {
 }
 
 void loop() {
-	if (clock_setup()) {
-		while (clock_loop());
-		clock_quit();
+	if (calendar_setup()) {
+		while (calendar_loop());
+		calendar_quit();
 	}
 }
