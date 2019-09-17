@@ -97,6 +97,7 @@ bool launcher_setup() {
 	clearRows(0, SEGTERM_ROWS);
 	EEPROMwrite(EE_CURRAPP, 255);
 	menuStart();
+	return true;
 }
 
 bool launcher_loop() {
