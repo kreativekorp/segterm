@@ -13,6 +13,7 @@
 #include "SegTerm_vt100.h"
 #include "STApp_calendar.h"
 #include "STApp_clock.h"
+#include "STApp_launcher.h"
 #include "STApp_terminal.h"
 #include "TinyI2C.h"
 
@@ -28,8 +29,8 @@ void setup() {
 }
 
 void loop() {
-	if (calendar_setup()) {
-		while (calendar_loop());
-		calendar_quit();
+	if (launcher_setup()) {
+		while (launcher_loop());
+		launcher_quit();
 	}
 }
