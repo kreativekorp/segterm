@@ -38,7 +38,7 @@ static void startPlaying(uint8_t p) {
 		if (!pitch[i]) {
 			pitch[i] = p;
 			period[i] = SAMPLE_RATE / getNoteFrequency(p);
-			dutyCycle[i] = period[i] / 2;
+			dutyCycle[i] = period[i] / DUTY_CYCLE_DIVISOR;
 			curPhase[i] = 0;
 			return;
 		}
