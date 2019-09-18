@@ -29,9 +29,11 @@ static void handleKeyboardEvent(uint8_t ch, uint8_t mod) {
 	if (ch & KBD_PRESSED) {
 		uint8_t mode = vtGetMode();
 		if (!(mode & VT100_MODE_KEYBOARD_LOCK)) {
-			ch = keyboardEventToASCII(ch, mod);
-			if (ch >= 32) handleKeyboardChar(ch, mode);
-			else switch (ch) {
+			ch = keyboardEventToASCII(ch, (mod &~ KBD_MOD_CTRL));
+			if (ch >= 32) {
+				if ((mod & KBD_MOD_CTRL) && ch >= '@' && ch <= '~') ch &= 0x1F;
+				handleKeyboardChar(ch, mode);
+			} else switch (ch) {
 				case KBD_ASCII_BKSP:  handleKeyboardChar  (8,   mode); break;
 				case KBD_ASCII_TAB:   handleKeyboardChar  (9,   mode); break;
 				case KBD_ASCII_ESC:   handleKeyboardChar  (27,  mode); break;
