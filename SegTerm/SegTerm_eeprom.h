@@ -14,6 +14,7 @@
 #define EE_CENTURY     8
 #define EE_FIRSTDAY    9
 #define EE_CURRAPP    10
+#define EE_PIANOMODE  11
 #define EE_FONT       16
 
 #define EE_CHECK1_VALUE 0x57

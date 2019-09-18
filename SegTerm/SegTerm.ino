@@ -15,6 +15,7 @@
 #include "STApp_calendar.h"
 #include "STApp_clock.h"
 #include "STApp_launcher.h"
+#include "STApp_piano.h"
 #include "STApp_play.h"
 #include "STApp_terminal.h"
 #include "TinyI2C.h"
