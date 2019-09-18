@@ -178,7 +178,7 @@ static uint8_t cc, cy, cm;
 static uint8_t drawnDay;
 static unsigned long drawnAt;
 
-static void checkToday() {
+static void goToday() {
 	uint8_t c, y, m, d, w, hr, min, sec, ampm;
 	getTime(&c, &y, &m, &d, &w, &hr, &min, &sec, &ampm, false);
 	
@@ -188,18 +188,6 @@ static void checkToday() {
 		cc = c; cy = y; cm = m;
 		clearRows(1, SEGTERM_ROWS);
 	}
-	
-	drawCalendar(cc, cy, cm, d, firstDay);
-	drawnDay = d;
-	drawnAt = millis();
-}
-
-static void goToday() {
-	uint8_t c, y, m, d, w, hr, min, sec, ampm;
-	getTime(&c, &y, &m, &d, &w, &hr, &min, &sec, &ampm, false);
-	
-	cc = c; cy = y; cm = m;
-	clearRows(1, SEGTERM_ROWS);
 	
 	drawCalendar(cc, cy, cm, d, firstDay);
 	drawnDay = d;
@@ -283,6 +271,7 @@ static void goNextYear() {
 bool calendar_setup() {
 	firstDay = EEPROM.read(EE_FIRSTDAY);
 	if (firstDay > 7) firstDay = 0;
+	cc = cy = cm = 0;
 	
 	clearRows(0, 1);
 	drawTime();
@@ -294,11 +283,7 @@ bool calendar_loop() {
 	uint8_t ch;
 	
 	drawTime();
-	if (drawnDay) {
-		checkToday();
-	} else if ((millis() - drawnAt) >= CAL_TODAY_AFTER) {
-		goToday();
-	}
+	if (drawnDay || ((millis() - drawnAt) >= CAL_TODAY_AFTER)) goToday();
 	
 	if ((ch = readKeyboardEvent())) {
 		if (ch == (KBD_KEY_ESC | KBD_PRESSED)) {
