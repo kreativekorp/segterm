@@ -209,6 +209,8 @@ uint8_t readKeyboardEvent();
 uint8_t getKeyboardModifiers();
 void    setKeyboardModifiers(uint8_t mod);
 void    setKeyboardLED(uint8_t led);
+void    enableKeyboardModifiers();
+void    disableKeyboardModifiers();
 char    keyboardEventToASCII(uint8_t evt, uint8_t mod);
 
 #endif

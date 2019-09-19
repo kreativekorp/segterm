@@ -61,7 +61,6 @@ static void handleKeyboardEvent(uint8_t ch) {
 	uint8_t p;
 	if (pianoMode) {
 		p = (ch & KBD_KEY) + 33;
-		setKeyboardModifiers(0);
 	} else {
 		if (!(p = pgm_read_byte(&QWERTY_MAP[ch & KBD_KEY]))) return;
 		if (getKeyboardModifiers() & KBD_MOD_CAPS) p += 12;
@@ -70,10 +69,12 @@ static void handleKeyboardEvent(uint8_t ch) {
 	if (ch & KBD_RELEASED) stopPlaying(p);
 }
 
-static void printMode() {
+static void setPianoMode(uint8_t mode) {
 	uint8_t r = ((SEGTERM_ROWS - 1) >> 1);
 	uint8_t c = (((SEGTERM_COLS << 2) - 12) >> 1);
-	if (pianoMode) {
+	if ((pianoMode = mode)) {
+		disableKeyboardModifiers();
+		setKeyboardModifiers(0);
 		setChar(r, c + 0, ' ');
 		setChar(r, c + 1, 'P');
 		setChar(r, c + 2, 'I');
@@ -81,6 +82,7 @@ static void printMode() {
 		setChar(r, c + 4, 'N');
 		setChar(r, c + 5, 'O');
 	} else {
+		enableKeyboardModifiers();
 		setChar(r, c + 0, 'Q');
 		setChar(r, c + 1, 'W');
 		setChar(r, c + 2, 'E');
@@ -136,9 +138,8 @@ bool piano_setup() {
 		dutyCycle[i] = 0;
 		curPhase[i] = 0;
 	}
-	pianoMode = EEPROM.read(EE_PIANOMODE);
 	clearRows(0, SEGTERM_ROWS);
-	printMode();
+	setPianoMode(EEPROM.read(EE_PIANOMODE));
 	attachISR();
 	return true;
 }
@@ -150,9 +151,8 @@ bool piano_loop() {
 	}
 	if ((ch = getButtons())) {
 		if (ch & (BUTTON_1 | BUTTON_3)) {
-			pianoMode = !pianoMode;
+			setPianoMode(!pianoMode);
 			EEPROMwrite(EE_PIANOMODE, pianoMode);
-			printMode();
 		}
 		delay(KBD_DEBOUNCE_DELAY);
 		while (getButtons() & ch);
@@ -164,5 +164,6 @@ bool piano_loop() {
 
 void piano_quit() {
 	detachISR();
+	enableKeyboardModifiers();
 	clearRows(0, SEGTERM_ROWS);
 }

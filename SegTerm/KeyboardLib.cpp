@@ -148,6 +148,7 @@ static uint8_t kbdBuffer[KBD_BUFFER_SIZE];
 static int kbdBufStart = 0;
 static int kbdBufEnd = 0;
 static uint8_t modifiers = 0;
+static uint8_t modifiersEnabled = 1;
 
 static void writeKeyboardEvent(uint8_t evt) {
 	kbdBuffer[kbdBufEnd] = evt; ++kbdBufEnd;
@@ -175,7 +176,7 @@ uint8_t readKeyboardEvent() {
 	if (kbdBufStart == kbdBufEnd) return 0;
 	key = kbdBuffer[kbdBufStart]; ++kbdBufStart;
 	if (kbdBufStart >= KBD_BUFFER_SIZE) kbdBufStart = 0;
-	switch (key) {
+	if (modifiersEnabled) switch (key) {
 		case (KBD_KEY_CAPS | KBD_PRESSED):
 			modifiers ^= KBD_MOD_CAPS;
 			if (modifiers & KBD_MOD_CAPS) KBD_LED_PORT |= KBD_LED_MASK;
@@ -208,6 +209,14 @@ void setKeyboardModifiers(uint8_t mod) {
 void setKeyboardLED(uint8_t led) {
 	if (led) KBD_LED_PORT |= KBD_LED_MASK;
 	else KBD_LED_PORT &=~ KBD_LED_MASK;
+}
+
+void enableKeyboardModifiers() {
+	modifiersEnabled = 1;
+}
+
+void disableKeyboardModifiers() {
+	modifiersEnabled = 0;
 }
 
 static const char ASCII_UNSHIFTED[] PROGMEM = {
