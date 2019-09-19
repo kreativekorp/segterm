@@ -17,19 +17,19 @@
 #include "STApp_terminal.h"
 
 APPNAMES
-	APPNAME(1, "Clock")
-	APPNAME(2, "Calendar")
-	APPNAME(3, "Play Notation")
-	APPNAME(4, "Play Piano")
-	APPNAME(5, "Terminal")
+	APPNAME( 32, "Clock")
+	APPNAME( 33, "Calendar")
+	APPNAME(160, "Play Notation")
+	APPNAME(161, "Play Piano")
+	APPNAME(200, "Terminal")
 ENDNAMES
 
 REGAPPS
-	REGAPP(1, clock)
-	REGAPP(2, calendar)
-	REGAPP(3, play)
-	REGAPP(4, piano)
-	REGAPP(5, terminal)
+	REGAPP( 32, clock)
+	REGAPP( 33, calendar)
+	REGAPP(160, play)
+	REGAPP(161, piano)
+	REGAPP(200, terminal)
 ENDAPPS
 
 // -------- STOP ADDING APPS HERE -------- //
