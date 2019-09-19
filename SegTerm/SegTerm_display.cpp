@@ -566,3 +566,15 @@ void fillScreen(uint8_t ch, uint8_t chattr, uint8_t mdattr) {
 	}
 	if (!lockLevel) flushScreen();
 }
+
+uint8_t identifyLoadedFont() {
+	uint8_t isA = 1, isB = 1, i = 0;
+	while ((isA || isB) && (i < 96)) {
+		if (isA && (font[i] != pgm_read_byte(&FONT_A[i]))) isA = 0;
+		if (isB && (font[i] != pgm_read_byte(&FONT_B[i]))) isB = 0;
+		++i;
+	}
+	if (isA) return 0;
+	if (isB) return 1;
+	return 255;
+}
