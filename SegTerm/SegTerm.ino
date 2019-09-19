@@ -17,6 +17,7 @@
 #include "STApp_launcher.h"
 #include "STApp_piano.h"
 #include "STApp_play.h"
+#include "STApp_settings.h"
 #include "STApp_terminal.h"
 #include "TinyI2C.h"
 

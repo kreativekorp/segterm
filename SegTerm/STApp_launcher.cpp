@@ -14,6 +14,7 @@
 #include "STApp_calendar.h"
 #include "STApp_play.h"
 #include "STApp_piano.h"
+#include "STApp_settings.h"
 #include "STApp_terminal.h"
 
 APPNAMES
@@ -21,6 +22,7 @@ APPNAMES
 	APPNAME( 33, "Calendar")
 	APPNAME(160, "Play Notation")
 	APPNAME(161, "Play Piano")
+	APPNAME(192, "Settings")
 	APPNAME(200, "Terminal")
 ENDNAMES
 
@@ -29,6 +31,7 @@ REGAPPS
 	REGAPP( 33, calendar)
 	REGAPP(160, play)
 	REGAPP(161, piano)
+	REGAPP(192, settings)
 	REGAPP(200, terminal)
 ENDAPPS
 
