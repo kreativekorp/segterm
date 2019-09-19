@@ -6,6 +6,7 @@
 #include "SegTerm_config.h"
 #include "SegTerm_display.h"
 #include "SegTerm_eeprom.h"
+#include "SegTerm_rtc.h"
 #include "SegTerm_vt100.h"
 #include "STApp_settings.h"
 
@@ -148,6 +149,37 @@ static uint8_t loadedFont;
 static uint8_t firstDay;
 static uint8_t currSetting;
 
+static void drawDateTime() {
+	if (SEGTERM_COLS >= 3) {
+		uint8_t c, y, m, d, w, hr, min, sec, ampm;
+		getTime(&c, &y, &m, &d, &w, &hr, &min, &sec, &ampm, true);
+		if (dateRow < SEGTERM_ROWS) {
+			uint8_t col = (SEGTERM_COLS<<2) - 9;
+			setCharAndAttr(dateRow, col++, ('0' | (c >> 4)), 0);
+			setCharAndAttr(dateRow, col++, ('0' | (c & 15)), 0);
+			setCharAndAttr(dateRow, col++, ('0' | (y >> 4)), 0);
+			setCharAndAttr(dateRow, col++, ('0' | (y & 15)), SEGTERM_CHATTR_DOT);
+			setCharAndAttr(dateRow, col++, ('0' | (m >> 4)), 0);
+			setCharAndAttr(dateRow, col++, ('0' | (m & 15)), SEGTERM_CHATTR_DOT);
+			setCharAndAttr(dateRow, col++, ('0' | (d >> 4)), 0);
+			setCharAndAttr(dateRow, col  , ('0' | (d & 15)), 0);
+		}
+		if (timeRow < SEGTERM_ROWS) {
+			uint8_t col = (SEGTERM_COLS<<2) - (ampm ? 9 : 7);
+			setCharAndAttr(timeRow, col++, ((hr >> 4) ? ('0' | (hr  >> 4)) : 0), 0);
+			setCharAndAttr(timeRow, col++,              ('0' | (hr  & 15))     , SEGTERM_CHATTR_DOT);
+			setCharAndAttr(timeRow, col++,              ('0' | (min >> 4))     , 0);
+			setCharAndAttr(timeRow, col++,              ('0' | (min & 15))     , SEGTERM_CHATTR_DOT);
+			setCharAndAttr(timeRow, col++,              ('0' | (sec >> 4))     , 0);
+			setCharAndAttr(timeRow, col  ,              ('0' | (sec & 15))     , 0);
+			if (ampm) {
+				setCharAndAttr(timeRow, ++col, ((ampm == PM) ? 'P' : 'A'), 0);
+				setCharAndAttr(timeRow, ++col, (           'M'          ), 0);
+			}
+		}
+	}
+}
+
 static void drawMenuItem(uint8_t row, uint8_t curr, uint8_t i) {
 	uint8_t arrow = false;
 	setCharAndAttr(row, 0, (curr ? 0x40 : 0), SEGTERM_CHATTR_RAW);
@@ -210,12 +242,14 @@ static void drawMenuItem(uint8_t row, uint8_t curr, uint8_t i) {
 			printLeft(row, 2, "Date");
 			clearCenter(row, 6, 1);
 			dateRow = row;
+			drawDateTime();
 			arrow = true;
 			break;
 		case SETTING_TIME:
 			printLeft(row, 2, "Time");
 			clearCenter(row, 6, 1);
 			timeRow = row;
+			drawDateTime();
 			arrow = true;
 			break;
 		case SETTING_FIRST_DAY:
@@ -370,14 +404,7 @@ bool settings_loop() {
 			return menuResult(menuActionUp());
 		}
 	}
-	if (SEGTERM_COLS >= 3) {
-		if (dateRow < SEGTERM_ROWS) {
-			// TODO
-		}
-		if (timeRow < SEGTERM_ROWS) {
-			// TODO
-		}
-	}
+	drawDateTime();
 	return true;
 }
 
