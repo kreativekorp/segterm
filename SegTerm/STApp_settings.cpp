@@ -127,9 +127,15 @@ static void about() {
 		}
 	}
 	for (;;) {
-		if (readKeyboardEvent() == (KBD_KEY_ESC | KBD_PRESSED)) {
-			while (readKeyboardEvent() != (KBD_KEY_ESC | KBD_RELEASED));
-			break;
+		if ((row = readKeyboardEvent())) {
+			if (row & KBD_PRESSED) {
+				row &= KBD_KEY;
+				if (row == KBD_KEY_ESC || row == KBD_KEY_ENTER || row == KBD_KEY_SPACE) {
+					row |= KBD_RELEASED;
+					while (readKeyboardEvent() != row);
+					break;
+				}
+			}
 		}
 		if (getButtons() & BUTTON_2) {
 			delay(KBD_DEBOUNCE_DELAY);
@@ -141,7 +147,101 @@ static void about() {
 	clearRows(0, SEGTERM_ROWS);
 }
 
-// TODO
+static void timeSetter() {
+	clearRows(0, SEGTERM_ROWS);
+	// TODO
+	clearRows(0, SEGTERM_ROWS);
+}
+
+static void dateSetter() {
+	clearRows(0, SEGTERM_ROWS);
+	// TODO
+	clearRows(0, SEGTERM_ROWS);
+}
+
+static void brightnessSetter() {
+	uint8_t row, col, ch, i;
+	clearRows(0, SEGTERM_ROWS);
+	if (SEGTERM_ROWS >= 5) {
+		row = ((SEGTERM_ROWS - 5) >> 1);
+		for (i = 0; i < SEGTERM_COLS; ++i) {
+			setMdAttr(row + 2, i, VT100_BRIGHTNESS_DIM    << 4);
+			setMdAttr(row + 3, i, VT100_BRIGHTNESS_NORMAL << 4);
+			setMdAttr(row + 4, i, VT100_BRIGHTNESS_BRIGHT << 4);
+		}
+		printLeft(row + 2, 0, "Dimmed Text ^[[2m Dimmed Text ^[[2m");
+		printLeft(row + 3, 0, "Normal Text ^[[0m Normal Text ^[[0m");
+		printLeft(row + 4, 0, "Bright Text ^[[1m Bright Text ^[[1m");
+	} else if (SEGTERM_ROWS >= 4) {
+		row = ((SEGTERM_ROWS - 4) >> 1);
+		for (i = 0; i < SEGTERM_COLS; ++i) {
+			setMdAttr(row + 1, i, VT100_BRIGHTNESS_DIM    << 4);
+			setMdAttr(row + 2, i, VT100_BRIGHTNESS_NORMAL << 4);
+			setMdAttr(row + 3, i, VT100_BRIGHTNESS_BRIGHT << 4);
+		}
+		printLeft(row + 1, 0, "Dimmed Text ^[[2m Dimmed Text ^[[2m");
+		printLeft(row + 2, 0, "Normal Text ^[[0m Normal Text ^[[0m");
+		printLeft(row + 3, 0, "Bright Text ^[[1m Bright Text ^[[1m");
+	} else {
+		row = ((SEGTERM_ROWS - 1) >> 1);
+	}
+	if (SEGTERM_COLS >= 3) {
+		col = (((SEGTERM_COLS<<2) - 14) >> 1);
+	} else {
+		col = 0;
+	}
+	printLeft(row, col, "Brightness");
+	itoa(getBrightness());
+	printRight(row, col, itoabuf);
+	for (;;) {
+		if ((ch = readKeyboardEvent())) {
+			if (ch & KBD_PRESSED) {
+				ch &= KBD_KEY;
+				if (ch == KBD_KEY_UP || ch == KBD_KEY_RIGHT) {
+					if ((i = getBrightness()) < 15) {
+						++i; setBrightness(i); itoa(i);
+						printRight(row, col, "  ");
+						printRight(row, col, itoabuf);
+					}
+				} else if (ch == KBD_KEY_DOWN || ch == KBD_KEY_LEFT) {
+					if ((i = getBrightness()) > 3) {
+						--i; setBrightness(i); itoa(i);
+						printRight(row, col, "  ");
+						printRight(row, col, itoabuf);
+					}
+				} else if (ch == KBD_KEY_ESC || ch == KBD_KEY_ENTER || ch == KBD_KEY_SPACE) {
+					i = 42;
+				} else {
+					continue;
+				}
+				ch |= KBD_RELEASED;
+				while (readKeyboardEvent() != ch);
+				if (i == 42) break;
+			}
+		}
+		if ((ch = getButtons())) {
+			if (ch & BUTTON_1) {
+				if ((i = getBrightness()) < 15) {
+					++i; setBrightness(i); itoa(i);
+					printRight(row, col, "  ");
+					printRight(row, col, itoabuf);
+				}
+			}
+			if (ch & BUTTON_3) {
+				if ((i = getBrightness()) > 3) {
+					--i; setBrightness(i); itoa(i);
+					printRight(row, col, "  ");
+					printRight(row, col, itoabuf);
+				}
+			}
+			delay(KBD_DEBOUNCE_DELAY);
+			while (getButtons() & ch);
+			delay(KBD_DEBOUNCE_DELAY);
+			if (ch & BUTTON_2) break;
+		}
+	}
+	clearRows(0, SEGTERM_ROWS);
+}
 
 static uint8_t dateRow;
 static uint8_t timeRow;
@@ -166,10 +266,11 @@ static void drawDateTime() {
 		}
 		if (timeRow < SEGTERM_ROWS) {
 			uint8_t col = (SEGTERM_COLS<<2) - (ampm ? 9 : 7);
+			uint8_t dot = (sec & 1) ? 0 : SEGTERM_CHATTR_DOT;
 			setCharAndAttr(timeRow, col++, ((hr >> 4) ? ('0' | (hr  >> 4)) : 0), 0);
-			setCharAndAttr(timeRow, col++,              ('0' | (hr  & 15))     , SEGTERM_CHATTR_DOT);
+			setCharAndAttr(timeRow, col++,              ('0' | (hr  & 15))     , dot);
 			setCharAndAttr(timeRow, col++,              ('0' | (min >> 4))     , 0);
-			setCharAndAttr(timeRow, col++,              ('0' | (min & 15))     , SEGTERM_CHATTR_DOT);
+			setCharAndAttr(timeRow, col++,              ('0' | (min & 15))     , dot);
 			setCharAndAttr(timeRow, col++,              ('0' | (sec >> 4))     , 0);
 			setCharAndAttr(timeRow, col  ,              ('0' | (sec & 15))     , 0);
 			if (ampm) {
@@ -301,8 +402,6 @@ static void drawMenu() {
 static void menuStart() {
 	dateRow = 255;
 	timeRow = 255;
-	loadedFont = identifyLoadedFont();
-	firstDay = EEPROM.read(EE_FIRSTDAY);
 	currSetting = 0;
 	drawMenu();
 }
@@ -322,8 +421,47 @@ static void menuDown() {
 }
 
 static uint8_t menuActionDown() {
+	uint8_t tmp;
 	switch (currSetting) {
-		// TODO
+		case SETTING_FONT:
+			if (++loadedFont >= 2) loadedFont = 0;
+			loadFont(loadedFont);
+			return SETTING_ACTION_REDRAW_ITEM;
+		case SETTING_LOWERCASE:
+			setLcMode(!getLcMode());
+			return SETTING_ACTION_REDRAW_ITEM;
+		case SETTING_DOT_MODE:
+			switch (getDotMode()) {
+				default:
+					setDotMode(SEGTERM_DOTMODE_HIGHBIT); break;
+				case SEGTERM_DOTMODE_HIGHBIT:
+					setDotMode(SEGTERM_DOTMODE_UPPERCASE); break;
+				case SEGTERM_DOTMODE_UPPERCASE:
+					setDotMode(SEGTERM_DOTMODE_LOWERCASE); break;
+				case SEGTERM_DOTMODE_LOWERCASE:
+					setDotMode(0); break;
+			}
+			return SETTING_ACTION_REDRAW_ITEM;
+		case SETTING_LOCAL_ECHO:
+			vtSetMode(vtGetMode() ^ VT100_MODE_LOCAL_ECHO);
+			return SETTING_ACTION_REDRAW_ITEM;
+		case SETTING_CURSOR:
+			tmp = vtGetMode();
+			if (tmp & VT100_MODE_CURSOR_ON) {
+				if (tmp & VT100_MODE_CURSOR_BLINK) {
+					tmp &=~ VT100_MODE_CURSOR_BLINK;
+				} else {
+					tmp &=~ VT100_MODE_CURSOR_ON;
+				}
+			} else {
+				tmp |= VT100_MODE_CURSOR_ON;
+				tmp |= VT100_MODE_CURSOR_BLINK;
+			}
+			vtSetMode(tmp);
+			return SETTING_ACTION_REDRAW_ITEM;
+		case SETTING_FIRST_DAY:
+			if (++firstDay >= 7) firstDay = 0;
+			return SETTING_ACTION_REDRAW_ITEM;
 		default:
 			return SETTING_ACTION_NOOP;
 	}
@@ -331,7 +469,15 @@ static uint8_t menuActionDown() {
 
 static uint8_t menuActionUp() {
 	switch (currSetting) {
-		// TODO
+		case SETTING_BRIGHTNESS:
+			brightnessSetter();
+			return SETTING_ACTION_REDRAW_MENU;
+		case SETTING_DATE:
+			dateSetter();
+			return SETTING_ACTION_REDRAW_MENU;
+		case SETTING_TIME:
+			timeSetter();
+			return SETTING_ACTION_REDRAW_MENU;
 		case SETTING_ABOUT:
 			about();
 			return SETTING_ACTION_REDRAW_MENU;
@@ -361,6 +507,12 @@ static bool menuResult(uint8_t action) {
 }
 
 bool settings_setup() {
+	loadDisplaySettingsFromEEPROM();
+	loadedFont = identifyLoadedFont();
+	firstDay = EEPROM.read(EE_FIRSTDAY);
+	if (firstDay > 7) firstDay = 0;
+	vtLoadMode();
+	
 	clearRows(0, SEGTERM_ROWS);
 	menuStart();
 	return true;
@@ -409,5 +561,9 @@ bool settings_loop() {
 }
 
 void settings_quit() {
+	saveDisplaySettingsToEEPROM();
+	EEPROMwrite(EE_FIRSTDAY, firstDay);
+	vtSaveMode();
+	
 	clearRows(0, SEGTERM_ROWS);
 }
