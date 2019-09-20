@@ -145,7 +145,7 @@ static void drawCalendar(uint8_t c, uint8_t y, uint8_t m, uint8_t d, uint8_t fd)
 			2
 		);
 		uint8_t dm = daysInMonth(c, y, m, false);
-		uint8_t dw = (dayOfWeek(c, y, m, 1, false) + fd - 1) % 7;
+		uint8_t dw = (dayOfWeek(c, y, m, 1, false) + 6 - fd) % 7;
 		uint8_t dx = (ds + 2) * dw + db;
 		uint8_t cd, d1, d2, da;
 		
