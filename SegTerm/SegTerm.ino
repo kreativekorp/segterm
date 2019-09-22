@@ -33,8 +33,28 @@ void setup() {
 	uint8_t ch;
 	if ((ch = getButtons())) {
 		switch (ch) {
-			case BUTTON_1: EEPROMwrite(EE_CURRAPP, 255); break;
-			case BUTTON_2: vtPrint("\x1B[7;9y"); break;
+			case BUTTON_1: // launcher
+				EEPROMwrite(EE_CURRAPP, 255);
+				break;
+			case BUTTON_2: // settings
+				EEPROMwrite(EE_CURRAPP, 192);
+				break;
+			case BUTTON_3: // terminal
+				EEPROMwrite(EE_CURRAPP, 200);
+				break;
+			case (BUTTON_1|BUTTON_2): // calendar
+				EEPROMwrite(EE_CURRAPP, 33);
+				break;
+			case (BUTTON_1|BUTTON_3): // self test
+				vtPrint("\x1B[7;9y");
+				break;
+			case (BUTTON_1|BUTTON_2|BUTTON_3): // factory reset
+				EEPROMwrite(EE_CURRAPP, 255);
+				loadDefaultDisplaySettings();
+				saveDisplaySettingsToEEPROM();
+				vtSetMode(VT100_MODE_DEFAULT);
+				vtSaveMode();
+				break;
 		}
 		delay(KBD_DEBOUNCE_DELAY);
 		while (getButtons() & ch);
