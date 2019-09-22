@@ -719,10 +719,20 @@ static void drawMenuItem(uint8_t row, uint8_t curr, uint8_t i) {
 					printRight(row, 0, "Off"  ); break;
 			}
 			break;
+		case SETTING_TERMINAL:
+			printLeft(row, 2, "Terminal");
+			clearCenter(row, 10, 4);
+			printRight(row, 0, (vtGetMode() & VT100_MODE_VT52) ? "VT52" : "VT102");
+			break;
 		case SETTING_LOCAL_ECHO:
 			printLeft(row, 2, "Local Echo");
 			clearCenter(row, 12, 2);
 			printRight(row, 0, (vtGetMode() & VT100_MODE_LOCAL_ECHO) ? "On" : "Off");
+			break;
+		case SETTING_RETURN:
+			printLeft(row, 2, "Return");
+			clearCenter(row, 8, 2);
+			printRight(row, 0, (vtGetMode() & VT100_MODE_NEWLINE) ? "CRLF" : "CR");
 			break;
 		case SETTING_CURSOR:
 			printLeft(row, 2, "Cursor");
@@ -840,8 +850,14 @@ static uint8_t menuActionDown() {
 					setDotMode(0); break;
 			}
 			return SETTING_ACTION_REDRAW_ITEM;
+		case SETTING_TERMINAL:
+			vtSetMode(vtGetMode() ^ VT100_MODE_VT52);
+			return SETTING_ACTION_REDRAW_ITEM;
 		case SETTING_LOCAL_ECHO:
 			vtSetMode(vtGetMode() ^ VT100_MODE_LOCAL_ECHO);
+			return SETTING_ACTION_REDRAW_ITEM;
+		case SETTING_RETURN:
+			vtSetMode(vtGetMode() ^ VT100_MODE_NEWLINE);
 			return SETTING_ACTION_REDRAW_ITEM;
 		case SETTING_CURSOR:
 			tmp = vtGetMode();

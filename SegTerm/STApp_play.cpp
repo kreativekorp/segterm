@@ -53,8 +53,15 @@ bool play_loop() {
 			}
 		} else if (ch == '\b') {
 			if (bufPtr > 0) {
-				if (vtGetCursorX()) vtPrint("\b \b");
-				else vtPrint("\x1B[A\x1B[255C\b \b");
+				uint8_t y = vtGetCursorY();
+				uint8_t x = vtGetCursorX();
+				if (x) --x;
+				else {
+					x = (SEGTERM_COLS<<2) - 1;
+					if (y) --y;
+				}
+				vtSetCursor(y, x);
+				setChar(y, x, 0);
 				--bufPtr;
 				buffer[bufPtr] = 0;
 			}

@@ -147,6 +147,10 @@ bool piano_setup() {
 bool piano_loop() {
 	uint8_t ch;
 	if ((ch = readKeyboardEvent())) {
+		if ((ch == (KBD_KEY_ESC | KBD_PRESSED)) && !pianoMode) {
+			while (readKeyboardEvent() != (KBD_KEY_ESC | KBD_RELEASED));
+			return false;
+		}
 		handleKeyboardEvent(ch);
 	}
 	if ((ch = getButtons())) {

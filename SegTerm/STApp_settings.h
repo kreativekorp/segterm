@@ -5,13 +5,15 @@
 #define SETTING_FONT        1
 #define SETTING_LOWERCASE   2
 #define SETTING_DOT_MODE    3
-#define SETTING_LOCAL_ECHO  4
-#define SETTING_CURSOR      5
-#define SETTING_DATE        6
-#define SETTING_TIME        7
-#define SETTING_FIRST_DAY   8
-#define SETTING_ABOUT       9
-#define SETTING_MAX        10
+#define SETTING_TERMINAL    4
+#define SETTING_LOCAL_ECHO  5
+#define SETTING_RETURN      6
+#define SETTING_CURSOR      7
+#define SETTING_DATE        8
+#define SETTING_TIME        9
+#define SETTING_FIRST_DAY  10
+#define SETTING_ABOUT      11
+#define SETTING_MAX        12
 
 #define SETTING_ACTION_NOOP        0
 #define SETTING_ACTION_REDRAW_ITEM 1
