@@ -10,6 +10,8 @@
 #include "SegTerm_vt100.h"
 #include "STApp_settings.h"
 
+// -------- UTILITY FUNCTIONS -------- //
+
 static void printLeft(uint8_t row, uint8_t col, const char * s) {
 	while (col < (SEGTERM_COLS<<2) && *s) {
 		setCharAndAttr(row, col, *s, 0);
@@ -41,6 +43,8 @@ static void itoa(int v) {
 	while (p1 < 8) { itoabuf[p0] = itoabuf[p1]; ++p0; ++p1; }
 	itoabuf[p0] = 0;
 }
+
+// -------- ABOUT SCREEN -------- //
 
 static int freeRAM() {
 	extern int __heap_start, * __brkval; int v;
@@ -147,17 +151,409 @@ static void about() {
 	clearRows(0, SEGTERM_ROWS);
 }
 
+// -------- DATE AND TIME ADJUSTMENT -------- //
+
+static uint8_t getAMPM() {
+	uint8_t c, y, m, d, w, hr, min, sec, ampm;
+	getTime(&c, &y, &m, &d, &w, &hr, &min, &sec, &ampm, true);
+	return ampm;
+}
+
+static void drawSetDigit(uint8_t row, uint8_t col, uint8_t val, uint8_t high, uint8_t attr, uint8_t sel) {
+	if (SEGTERM_ROWS >= 3) {
+		setCharAndAttr(row - 1, col, (sel ? (high ? 12 : 24) : 0), SEGTERM_CHATTR_RAW);
+		setCharAndAttr(row,     col, ('0' | (high ? (val >> 4) : (val & 15))),   attr);
+		setCharAndAttr(row + 1, col, (sel ? (high ?  3 : 33) : 0), SEGTERM_CHATTR_RAW);
+	} else {
+		setCharAndAttr(
+			row, col,
+			('0' | (high ? (val >> 4) : (val & 15))),
+			(sel ? (attr | SEGTERM_CHATTR_DOT) : attr)
+		);
+	}
+}
+
+static void drawSetChar(uint8_t row, uint8_t col, uint8_t val, uint8_t high, uint8_t attr, uint8_t sel) {
+	if (SEGTERM_ROWS >= 3) {
+		setCharAndAttr(row - 1, col, (sel ? (high ? 12 : 24) : 0), SEGTERM_CHATTR_RAW);
+		setCharAndAttr(row,     col,  val,                                       attr);
+		setCharAndAttr(row + 1, col, (sel ? (high ?  3 : 33) : 0), SEGTERM_CHATTR_RAW);
+	} else {
+		setCharAndAttr(
+			row, col, val,
+			(sel ? (attr | SEGTERM_CHATTR_DOT) : attr)
+		);
+	}
+}
+
+static void drawSetTime(uint8_t field) {
+	uint8_t row = ((SEGTERM_ROWS - 1) >> 1);
+	uint8_t c, y, m, d, w, hr, min, sec, ampm;
+	getTime(&c, &y, &m, &d, &w, &hr, &min, &sec, &ampm, true);
+	if (SEGTERM_COLS >= 3) {
+		uint8_t col = (((SEGTERM_COLS<<2) - 12) >> 1);
+		uint8_t hid = (hr < 10) ? SEGTERM_CHATTR_HIDDEN : 0;
+		uint8_t dot = (sec & 1) ? 0 : SEGTERM_CHATTR_DOT;
+		drawSetChar(row, col+0, (ampm ? '1' : '2'), 1, 0, (field == RTCF_TIMEFMT));
+		drawSetChar(row, col+1, (ampm ? '2' : '4'), 0, 0, (field == RTCF_TIMEFMT));
+		setCharAndAttr(row, col+2, 'h', 0);
+		setCharAndAttr(row, col+3,  0 , 0);
+		drawSetDigit(row, col+4, hr,  1, hid, (field == RTCF_HOUR));
+		drawSetDigit(row, col+5, hr,  0, dot, (field == RTCF_HOUR));
+		drawSetDigit(row, col+6, min, 1, 0,   (field == RTCF_MINUTE));
+		drawSetDigit(row, col+7, min, 0, dot, (field == RTCF_MINUTE));
+		drawSetDigit(row, col+8, sec, 1, 0,   (field == RTCF_SECOND));
+		drawSetDigit(row, col+9, sec, 0, 0,   (field == RTCF_SECOND));
+		if (ampm) {
+			drawSetChar(row, col+10, ((ampm == PM) ? 'P' : 'A'), 1, 0, (field == RTCF_AMPM));
+			drawSetChar(row, col+11, (           'M'          ), 0, 0, (field == RTCF_AMPM));
+		}
+	} else {
+		uint8_t col = (((SEGTERM_COLS<<2) - 4) >> 1);
+		if (field == RTCF_TIMEFMT) {
+			drawSetChar(row, col+0, (ampm ? '1' : '2'), 1, 0, (field == RTCF_TIMEFMT));
+			drawSetChar(row, col+1, (ampm ? '2' : '4'), 0, 0, (field == RTCF_TIMEFMT));
+			setCharAndAttr(row, col+2, 'h', 0);
+			setCharAndAttr(row, col+3,  0 , 0);
+		} else if (field == RTCF_HOUR || field == RTCF_AMPM) {
+			uint8_t hid = (hr < 10) ? SEGTERM_CHATTR_HIDDEN : 0;
+			drawSetDigit(row, col+0, hr, 1, hid, (field == RTCF_HOUR));
+			drawSetDigit(row, col+1, hr, 0, 0,   (field == RTCF_HOUR));
+			if (ampm) {
+				drawSetChar(row, col+2, ((ampm == PM) ? 'P' : 'A'), 1, 0, (field == RTCF_AMPM));
+				drawSetChar(row, col+3, (           'M'          ), 0, 0, (field == RTCF_AMPM));
+			}
+		} else if (field == RTCF_MINUTE || field == RTCF_SECOND) {
+			uint8_t dot = (sec & 1) ? 0 : SEGTERM_CHATTR_DOT;
+			drawSetDigit(row, col+0, min, 1, 0,   (field == RTCF_MINUTE));
+			drawSetDigit(row, col+1, min, 0, dot, (field == RTCF_MINUTE));
+			drawSetDigit(row, col+2, sec, 1, 0,   (field == RTCF_SECOND));
+			drawSetDigit(row, col+3, sec, 0, 0,   (field == RTCF_SECOND));
+		}
+	}
+}
+
+static void drawSetDate(uint8_t field) {
+	uint8_t row = ((SEGTERM_ROWS - 1) >> 1);
+	uint8_t c, y, m, d, w, hr, min, sec, ampm;
+	getTime(&c, &y, &m, &d, &w, &hr, &min, &sec, &ampm, true);
+	if (SEGTERM_COLS >= 3) {
+		uint8_t col = (((SEGTERM_COLS<<2) - 10) >> 1);
+		drawSetDigit(row, col+0, c, 1, 0, (field == RTCF_CENTURY));
+		drawSetDigit(row, col+1, c, 0, 0, (field == RTCF_CENTURY));
+		drawSetDigit(row, col+2, y, 1, 0, (field == RTCF_YEAR));
+		drawSetDigit(row, col+3, y, 0, 0, (field == RTCF_YEAR));
+		setCharAndAttr(row, col+4, '-', 0);
+		drawSetDigit(row, col+5, m, 1, 0, (field == RTCF_MONTH));
+		drawSetDigit(row, col+6, m, 0, 0, (field == RTCF_MONTH));
+		setCharAndAttr(row, col+7, '-', 0);
+		drawSetDigit(row, col+8, d, 1, 0, (field == RTCF_DAY));
+		drawSetDigit(row, col+9, d, 0, 0, (field == RTCF_DAY));
+	} else {
+		uint8_t col = (((SEGTERM_COLS<<2) - 4) >> 1);
+		if (field == RTCF_CENTURY || field == RTCF_YEAR) {
+			drawSetDigit(row, col+0, c, 1, 0, (field == RTCF_CENTURY));
+			drawSetDigit(row, col+1, c, 0, 0, (field == RTCF_CENTURY));
+			drawSetDigit(row, col+2, y, 1, 0, (field == RTCF_YEAR));
+			drawSetDigit(row, col+3, y, 0, 0, (field == RTCF_YEAR));
+		} else if (field == RTCF_MONTH) {
+			setCharAndAttr(row, col+0, 0, 0);
+			drawSetDigit(row, col+1, m, 1, 0, (field == RTCF_MONTH));
+			drawSetDigit(row, col+2, m, 0, 0, (field == RTCF_MONTH));
+			setCharAndAttr(row, col+3, 0, 0);
+		} else if (field == RTCF_DAY) {
+			setCharAndAttr(row, col+0, 0, 0);
+			drawSetDigit(row, col+1, d, 1, 0, (field == RTCF_DAY));
+			drawSetDigit(row, col+2, d, 0, 0, (field == RTCF_DAY));
+			setCharAndAttr(row, col+3, 0, 0);
+		}
+	}
+}
+
+static void rollTimeFormat(uint8_t * hr, uint8_t * ampm) {
+	switch (*ampm) {
+		case AM:
+			*ampm = MIL;
+			if (*hr >= 12) *hr -= 12;
+			break;
+		case PM:
+			*ampm = MIL;
+			if (*hr < 12) *hr += 12;
+			break;
+		default:
+			*ampm = (*hr < 12) ? AM : PM;
+			if (*hr > 12) *hr -= 12;
+			else if (!*hr) *hr = 12;
+			break;
+	}
+}
+
+static void rollAMPM(uint8_t * ampm) {
+	switch (*ampm) {
+		case AM: *ampm = PM; break;
+		case PM: *ampm = AM; break;
+	}
+}
+
+static void rollUpRTC(uint8_t field) {
+	uint8_t c, y, m, d, w, hr, min, sec, ampm;
+	getTime(&c, &y, &m, &d, &w, &hr, &min, &sec, &ampm, false);
+	switch (field) {
+		case RTCF_CENTURY:                             ++c; if (c >= 100) c = 0;   if (d > (w = daysInMonth(c, y, m, false))) d = w; break;
+		case RTCF_YEAR:    ++y; if (y >= 100) { y = 0; ++c; if (c >= 100) c = 0; } if (d > (w = daysInMonth(c, y, m, false))) d = w; break;
+		case RTCF_MONTH:   ++m; if (m >   12)   m = 1;                             if (d > (w = daysInMonth(c, y, m, false))) d = w; break;
+		case RTCF_DAY:     ++d; if (d > daysInMonth(c, y, m, false)) d = 1; break;
+		case RTCF_TIMEFMT: rollTimeFormat(&hr, &ampm); break;
+		case RTCF_HOUR:    ++hr; if (ampm ? (hr > 12) : (hr >= 24)) hr = (ampm ? 1 : 0); if (ampm && (hr == 12)) rollAMPM(&ampm); break;
+		case RTCF_MINUTE:  ++min; if (min >= 60) min = 0; break;
+		case RTCF_SECOND:  ++sec; if (sec >= 60) sec = 0; break;
+		case RTCF_AMPM:    rollAMPM(&ampm); break;
+		default: return;
+	}
+	setTime(c, y, m, d, hr, min, sec, ampm, false);
+}
+
+static void rollDownRTC(uint8_t field) {
+	uint8_t c, y, m, d, w, hr, min, sec, ampm;
+	getTime(&c, &y, &m, &d, &w, &hr, &min, &sec, &ampm, false);
+	switch (field) {
+		case RTCF_CENTURY:                              --c; if (c >= 100) c = 99;   if (d > (w = daysInMonth(c, y, m, false))) d = w; break;
+		case RTCF_YEAR:    --y; if (y >= 100) { y = 99; --c; if (c >= 100) c = 99; } if (d > (w = daysInMonth(c, y, m, false))) d = w; break;
+		case RTCF_MONTH:   --m; if (m <    1)   m = 12;                              if (d > (w = daysInMonth(c, y, m, false))) d = w; break;
+		case RTCF_DAY:     --d; if (d < 1) d = daysInMonth(c, y, m, false); break;
+		case RTCF_TIMEFMT: rollTimeFormat(&hr, &ampm); break;
+		case RTCF_HOUR:    --hr; if (ampm ? (hr < 1) : (hr >= 24)) hr = (ampm ? 12 : 23); if (ampm && (hr == 11)) rollAMPM(&ampm); break;
+		case RTCF_MINUTE:  --min; if (min >= 60) min = 59; break;
+		case RTCF_SECOND:  --sec; if (sec >= 60) sec = 59; break;
+		case RTCF_AMPM:    rollAMPM(&ampm); break;
+		default: return;
+	}
+	setTime(c, y, m, d, hr, min, sec, ampm, false);
+}
+
+static uint8_t explicitSetRTC(uint8_t field, uint8_t subfield, uint8_t ch) {
+	uint8_t c, y, m, d, w, hr, min, sec, ampm, ret;
+	getTime(&c, &y, &m, &d, &w, &hr, &min, &sec, &ampm, false);
+	switch (field) {
+		case RTCF_CENTURY:
+			if (ch < '0' || ch > '9') return 0;
+			if (subfield) { c = c * 10 + (ch - '0'); ret = 2; }
+			else { c = ch - '0'; ret = 1; }
+			if (d > (w = daysInMonth(c, y, m, false))) d = w;
+			break;
+		case RTCF_YEAR:
+			if (ch < '0' || ch > '9') return 0;
+			if (subfield) { y = y * 10 + (ch - '0'); ret = 2; }
+			else { y = ch - '0'; ret = 1; }
+			if (d > (w = daysInMonth(c, y, m, false))) d = w;
+			break;
+		case RTCF_MONTH:
+			if (ch < '0' || ch > '9') return 0;
+			if (subfield) { m = m * 10 + (ch - '0'); if (m > 12) return 0; ret = 2; }
+			else { m = ch - '0'; if (m < 1) return 0; ret = (m == 1) ? 1 : 2; }
+			if (d > (w = daysInMonth(c, y, m, false))) d = w;
+			break;
+		case RTCF_DAY:
+			if (ch < '0' || ch > '9') return 0;
+			if (subfield) { d = d * 10 + (ch - '0'); if (d > daysInMonth(c, y, m, false)) return 0; ret = 2; }
+			else { d = ch - '0'; if (d < 1) return 0; ret = (d <= daysInMonth(c, y, m, false) / 10) ? 1 : 2; }
+			break;
+		case RTCF_TIMEFMT:
+			if (ch == '1') { if (!ampm) rollTimeFormat(&hr, &ampm); ret = 2; break; }
+			if (ch == '2') { if ( ampm) rollTimeFormat(&hr, &ampm); ret = 2; break; }
+			return 0;
+		case RTCF_HOUR:
+			if (ch < '0' || ch > '9') return 0;
+			if (subfield) { hr = hr * 10 + (ch - '0'); if (hr > (ampm ? 12 : 23)) return 0; ret = 2; }
+			else { hr = ch - '0'; if (ampm && (hr < 1)) return 0; ret = (hr <= (ampm ? 1 : 2)) ? 1 : 2; }
+			break;
+		case RTCF_MINUTE:
+			if (ch < '0' || ch > '9') return 0;
+			if (subfield) { min = min * 10 + (ch - '0'); if (min > 59) return 0; ret = 2; }
+			else { min = ch - '0'; ret = (min < 6) ? 1 : 2; }
+			break;
+		case RTCF_SECOND:
+			if (ch < '0' || ch > '9') return 0;
+			if (subfield) { sec = sec * 10 + (ch - '0'); if (sec > 59) return 0; ret = 2; }
+			else { sec = ch - '0'; ret = (sec < 6) ? 1 : 2; }
+			break;
+		case RTCF_AMPM:
+			if (ch == 'A' || ch == 'a') { ampm = AM; ret = 2; break; }
+			if (ch == 'P' || ch == 'p') { ampm = PM; ret = 2; break; }
+			return 0;
+		default: return 0;
+	}
+	setTime(c, y, m, d, hr, min, sec, ampm, false);
+	return ret;
+}
+
 static void timeSetter() {
+	uint8_t field = RTCF_TIMEFMT;
+	uint8_t subfield = 0;
+	uint8_t ch;
 	clearRows(0, SEGTERM_ROWS);
-	// TODO
+	for (;;) {
+		drawSetTime(field);
+		if ((ch = readKeyboardEvent())) {
+			if (ch & KBD_PRESSED) {
+				ch &= KBD_KEY;
+				switch (ch) {
+					case KBD_KEY_UP:
+						rollUpRTC(field);
+						drawSetTime(field);
+						break;
+					case KBD_KEY_DOWN:
+						rollDownRTC(field);
+						drawSetTime(field);
+						break;
+					case KBD_KEY_LEFT:
+						--field;
+						if (field < RTCF_TIMEFMT) field = (getAMPM() ? RTCF_AMPM : RTCF_SECOND);
+						subfield = 0;
+						drawSetTime(field);
+						break;
+					case KBD_KEY_RIGHT:
+					case KBD_KEY_TAB:
+						++field;
+						if (field > (getAMPM() ? RTCF_AMPM : RTCF_SECOND)) field = RTCF_TIMEFMT;
+						subfield = 0;
+						drawSetTime(field);
+						break;
+					case KBD_KEY_ENTER:
+						++field;
+						subfield = (field > (getAMPM() ? RTCF_AMPM : RTCF_SECOND)) ? 42 : 0;
+						drawSetTime(field);
+						break;
+					case KBD_KEY_ESC:
+						subfield = 42;
+						break;
+					default:
+						switch (explicitSetRTC(field, subfield, keyboardEventToASCII(ch, getKeyboardModifiers()))) {
+							case 1:
+								subfield = 1;
+								break;
+							case 2:
+								if (field < (getAMPM() ? RTCF_AMPM : RTCF_SECOND)) ++field;
+								subfield = 0;
+								drawSetTime(field);
+								break;
+							default:
+								continue;
+						}
+						break;
+				}
+				ch |= KBD_RELEASED;
+				while (readKeyboardEvent() != ch);
+				if (subfield == 42) break;
+			}
+		}
+		if ((ch = getButtons())) {
+			if (ch & BUTTON_1) {
+				rollUpRTC(field);
+				drawSetTime(field);
+			}
+			if (ch & BUTTON_3) {
+				rollDownRTC(field);
+				drawSetTime(field);
+			}
+			if (ch & BUTTON_2) {
+				++field;
+				subfield = (field > (getAMPM() ? RTCF_AMPM : RTCF_SECOND)) ? 42 : 0;
+				drawSetTime(field);
+			}
+			delay(KBD_DEBOUNCE_DELAY);
+			while (getButtons() & ch);
+			delay(KBD_DEBOUNCE_DELAY);
+			if (subfield == 42) break;
+		}
+	}
 	clearRows(0, SEGTERM_ROWS);
 }
 
 static void dateSetter() {
+	uint8_t field = RTCF_CENTURY;
+	uint8_t subfield = 0;
+	uint8_t ch;
 	clearRows(0, SEGTERM_ROWS);
-	// TODO
+	for (;;) {
+		drawSetDate(field);
+		if ((ch = readKeyboardEvent())) {
+			if (ch & KBD_PRESSED) {
+				ch &= KBD_KEY;
+				switch (ch) {
+					case KBD_KEY_UP:
+						rollUpRTC(field);
+						drawSetDate(field);
+						break;
+					case KBD_KEY_DOWN:
+						rollDownRTC(field);
+						drawSetDate(field);
+						break;
+					case KBD_KEY_LEFT:
+						--field;
+						if (field < RTCF_CENTURY) field = RTCF_DAY;
+						subfield = 0;
+						drawSetDate(field);
+						break;
+					case KBD_KEY_RIGHT:
+					case KBD_KEY_TAB:
+						++field;
+						if (field > RTCF_DAY) field = RTCF_CENTURY;
+						subfield = 0;
+						drawSetDate(field);
+						break;
+					case KBD_KEY_ENTER:
+						++field;
+						subfield = (field > RTCF_DAY) ? 42 : 0;
+						drawSetDate(field);
+						break;
+					case KBD_KEY_ESC:
+						subfield = 42;
+						break;
+					default:
+						switch (explicitSetRTC(field, subfield, keyboardEventToASCII(ch, getKeyboardModifiers()))) {
+							case 1:
+								subfield = 1;
+								break;
+							case 2:
+								if (field < RTCF_DAY) ++field;
+								subfield = 0;
+								drawSetDate(field);
+								break;
+							default:
+								continue;
+						}
+						break;
+				}
+				ch |= KBD_RELEASED;
+				while (readKeyboardEvent() != ch);
+				if (subfield == 42) break;
+			}
+		}
+		if ((ch = getButtons())) {
+			if (ch & BUTTON_1) {
+				rollUpRTC(field);
+				drawSetDate(field);
+			}
+			if (ch & BUTTON_3) {
+				rollDownRTC(field);
+				drawSetDate(field);
+			}
+			if (ch & BUTTON_2) {
+				++field;
+				subfield = (field > RTCF_DAY) ? 42 : 0;
+				drawSetDate(field);
+			}
+			delay(KBD_DEBOUNCE_DELAY);
+			while (getButtons() & ch);
+			delay(KBD_DEBOUNCE_DELAY);
+			if (subfield == 42) break;
+		}
+	}
 	clearRows(0, SEGTERM_ROWS);
 }
+
+// -------- BRIGHTNESS ADJUSTMENT -------- //
 
 static void brightnessSetter() {
 	uint8_t row, col, ch, i;
@@ -242,6 +638,8 @@ static void brightnessSetter() {
 	}
 	clearRows(0, SEGTERM_ROWS);
 }
+
+// -------- SETTINGS MENU -------- //
 
 static uint8_t dateRow;
 static uint8_t timeRow;
@@ -505,6 +903,8 @@ static bool menuResult(uint8_t action) {
 			return true;
 	}
 }
+
+// -------- MAIN EVENT LOOP -------- //
 
 bool settings_setup() {
 	loadDisplaySettingsFromEEPROM();
